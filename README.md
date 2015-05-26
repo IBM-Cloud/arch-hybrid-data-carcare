@@ -1,5 +1,28 @@
 # Workload - data scale out
 
+# running
+
+* install node and npm on your computer
+* clone this project
+* cd node
+* npm install
+* npm start
+* the /data directory on your computer will need to be writeable 
+* check out bin/www it will indicate what the port# is.  Currently it is http:localhost:3000.  You can visit this in a browser.  See the curl examples below.
+
+# curl
+Example curl from swift docs using cygwin.  -T upload a file.  -i include header information in the output. -X request command. -F form.  For a form it must have one file and one optional field whose value is the real storage filename.  A get at the volume will retrieve a list of all the files.
+
+    curl -v -i -T /cygdrive/c/Users/IBM_ADMIN/Downloads/a.txt localhost:3000/api/vol/public/a.txt -X PUT
+    curl -v localhost:3000/api/vol/public/
+    curl -v localhost:3000/api/vol/public/a.txt -X GET
+    curl -v localhost:3000/api/vol/public/a.txtx -X DELETE
+    curl -F password=@/etc/passwd www.mypasswords.com
+    curl -v -i -F "f=@/cygdrive/c/Users/IBM_ADMIN/Downloads/a.txt" localhost:3000/api/vol/public/form -X POST
+    curl -v -i -F "f=@/cygdrive/c/Users/IBM_ADMIN/Downloads/a.txt" -F "g=b.txt" localhost:3000/api/vol/public/form -X POST
+
+# background
+
 These are the services that need to be worked into the scenario.
 
 * object storage v2
@@ -15,11 +38,13 @@ Possibilities:
 
 # API
 
+Under construction... See the curl above for the current state of things.
+
 A rest API will be used for the back end program to exercise the services.
 Here are the dimensions that could effect the API
 
 * access - public/private
-* storage - fs/volume/obj/op - fs image or container file system, volume mounted volume or block storage, obj object storage v1, op on premise
+* storage - /vol/obj/op - fs image or container file system, volume mounted volume or block storage, obj object storage v1, op on premise
 * caching - memcacheLocal/memcacheService/
 * rw - ro/rw
 
@@ -27,11 +52,11 @@ Here are the dimensions that could effect the API
 Batch operations.
 * script
 
-Examples https://workloads.mybluemix.net/v1/
+Examples https://workloads.mybluemix.net/api/
 
-* POST volume/public/id - add a file that can be GET using this same URL
+* POST vol/public/id - add a file that can be GET using this same URL
 * GET obj/private/id - get the file 
-* GET volume/public?search=subset - return a listing, optionally specifying a subset.
+* GET vol/public?search=subset - return a listing, optionally specifying a subset.
 
 Swagger will be used for the rest API. 
 
@@ -52,12 +77,12 @@ See the [swagger editor](http://editor.swagger.io)
 
 
 Notice: https://github.com/swagger-api/swagger-codegen/issues/725 for generating node.js from swagger editor.
-Add the x-swagger-router-controller property within each path (like /volume below).
+Add the x-swagger-router-controller property within each path (like /vol below).
 And after generating the node.js server (see the Generate Server drop down) export the file as json and manually replace the api/swagger.json file that was incorrectly generated.
 
 
     paths:
-      /volume:
+      /vol:
         x-swagger-router-controller: Default
 
 Turn on some debugging information by setting the environment variable if you need help.
@@ -128,19 +153,6 @@ http://localhost:3000/api-docs - swagger json document
 http://localhost:3000/docs/ - swagger ui
 
 
-
-
-
-# curl
-Example curl from swift docs using cygwin.  -T upload a file.  -i include header information in the output. -X request command. -F form.  For a form it must have one file and one optional field whose value is the real storage filename.  A get at the volume will retrieve a list of all the files.
-
-    curl -v -i -T /cygdrive/c/Users/IBM_ADMIN/Downloads/a.txt localhost:3000/api/vol/public/a.txt -X PUT
-    curl -v localhost:3000/api/vol/public/
-    curl -v localhost:3000/api/vol/public/a.txt -X GET
-    curl -v localhost:3000/api/vol/public/a.txtx -X DELETE
-    curl -F password=@/etc/passwd www.mypasswords.com
-    curl -v -i -F "f=@/cygdrive/c/Users/IBM_ADMIN/Downloads/a.txt" localhost:3000/api/vol/public/form -X POST
-    curl -v -i -F "f=@/cygdrive/c/Users/IBM_ADMIN/Downloads/a.txt" -F "g=b.txt" localhost:3000/api/vol/public/form -X POST
     
 
 # Creating
