@@ -1,0 +1,54 @@
+var assert = require("assert"); // node.js core module
+process.env['DATADIR'] = 'tmpdata';
+var tmpData = process.env.DATADIR;
+var request = require('supertest');
+var express = require('express');
+var fs = require('fs');
+var rimraf = require('rimraf')
+rimraf.sync(tmpData);
+var app = require('../app.js');
+var rimraf = require('rimraf')
+
+request = request(app)
+
+describe('X', function(){
+  describe('y', function(done){
+    it('z', function(){
+        request.get('/api/vol/public')
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .expect('bad test')
+          .end(function(err, res){
+            if (err) return done(err);
+            done();
+          });
+    })
+    it('2', function(){
+        request.post('/api/vol/public/form')
+          .attach('file', 'package.json')
+          .end(function(err, res){
+            if (err) throw err;
+          });
+  
+    })
+    it('3', function(){
+        request.get('/api/vol/public')
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .expect('[x]')
+          .end(function(err, res){
+            if (err) return done(err);
+            done();
+          });
+    })
+    it('4', function(){
+        request.post('/api/vol/public/form')
+          .attach('file', 'package.json')
+          .field('name', 'value')
+          .end(function(err, res){
+            if (err) throw err;
+          });
+  
+    })
+  })
+});
