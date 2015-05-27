@@ -10,6 +10,13 @@
 * the /data directory on your computer will need to be writeable 
 * check out bin/www it will indicate what the port# is.  Currently it is http:localhost:3000.  You can visit this in a browser.  See the curl examples below.
 
+# test suite
+
+The test suite is run with mocha.
+
+    npm install -g mocha
+    npm test
+
 # curl
 Example curl from swift docs using cygwin.  -T upload a file.  -i include header information in the output. -X request command. -F form.  For a form it must have one file and one optional field whose value is the real storage filename.  A get at the volume will retrieve a list of all the files.
 

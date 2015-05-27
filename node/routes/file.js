@@ -7,6 +7,7 @@ var path = require('path');
 var fs = require('fs');
 var rimraf = require('rimraf')
 var sanitizeFilename = require('sanitize-filename');
+var debug = require('debug')('file');
 
 /*
 use the DATADIR environment if available otherwise use /data
@@ -21,7 +22,7 @@ var tmpFileNumber = 0;
 
 function mkdir(dir) {
   try {
-    fs.mkdirSync(dir)
+    fs.mkdirSync(dir);
   } catch (e) {
     if(e.hasOwnProperty('code') && e.code === 'EEXIST') return;
     console.log(e);
@@ -50,6 +51,7 @@ function storageFilename(fileName) {return path.join(storageDir, saneFilename(fi
 // curl -v -T /cygdrive/c/somefile -i localhost:3000/volume/storagefile -X PUT
 router.put('/:file', function(req, res, next) {
   var fileName = req.params.file;
+  debug('put /' + fileName);
   var tmpFile = tmpFilename();
   req.on('end', function() {
     fs.rename(tmpFile, storageFilename(fileName));
@@ -63,25 +65,27 @@ router.put('/:file', function(req, res, next) {
 // The form has two inputs: 1-file and 2-text file name that can override the file name
 router.post('/form', function(req, res, next) {
   var busboy = new Busboy({ headers: req.headers, limits:{files:1} });
-  var finalFileName; //
+  var finalFileName; // file name posted, overridden by a field
   var tmpFile = tmpFilename();
   busboy.on('field', function(fieldname, val, fieldnameTruncated, valTruncated) {
-    console.log('field:' + arguments);
+    debug('post /form field:' + val);
     if (val) {
       finalFileName = val; // override the file name
     }
   });
   busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
-    console.log('file:' + arguments);
+    debug('post /form file:' + filename);
     if (!finalFileName) {
       finalFileName = filename; // if the file name has not been overridden use this one
     }
     file.pipe(fs.createWriteStream(tmpFile));
   });
   busboy.on('finish', function() {
-    console.log('finish:' + arguments);
+    debug('post /form rename:' + tmpFile + '->' + finalFileName);
+    var storageFinalName = storageFilename(finalFileName);
     res.writeHead(201, ''); // todo
-    fs.rename(tmpFile, storageFilename(finalFileName), function(){res.end();});
+    
+    fs.rename(tmpFile, storageFinalName, function(){res.end();});
   });
   req.pipe(busboy);
 });
@@ -90,13 +94,13 @@ router.post('/form', function(req, res, next) {
 // $ref: "#/definitions/fileDescription"
 // [{name:filename}, ...]
 router.get('/', function getFiles (req, res, next) {
+  debug('get /');
   fs.readdir(storageDir, function(err, files) {
     if (err) {
       res.status(404).json(err).end();
       return;
     }
     var ret = [];
-    console.log('get 3/');
     for (var i = 0; i < files.length; i++) {
       ret.push({'filename': files[i]});
     }
@@ -108,6 +112,7 @@ router.get('/', function getFiles (req, res, next) {
 // curl -v localhost:3000/volume/a.txtx
 router.get('/:file', function getFile (req, res, next) {
   var fileName = req.params.file;
+  debug('get /' + fileName);
   var filePath = storageFilename(fileName);
   fs.stat(filePath, function(err, stat){
     if (err) {
@@ -128,6 +133,7 @@ router.get('/:file', function getFile (req, res, next) {
 // curl -v localhost:3000/volume/swagger.yaml -X DELETE
 router.delete('/:file', function (req, res, next) {
   var fileName = req.params.file;
+  debug('delete /' + fileName);
   var filePath = storageFilename(fileName);
   fs.unlink(filePath, function(err){
     if (err) {

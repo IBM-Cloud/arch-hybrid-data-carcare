@@ -20,6 +20,7 @@
     "serve-favicon": "~2.2.0"
   },
   "devDependencies": {
+    "memory-streams": "^0.1.0",
     "mocha": "^2.2.5",
     "supertest": "^1.0.1"
   }
