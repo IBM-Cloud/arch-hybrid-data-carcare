@@ -1,17 +1,16 @@
 FROM registry-ice.ng.bluemix.net/ibmnode:latest
 
 # Install tooling
-RUN apt-get -y update && apt-get -y curl git-core
-#RUN curl -sL https://deb.nodesource.com/setup | sudo bash -
-#RUN apt-get install -y nodejs
+RUN apt-get -y update && apt-get -y install curl git-core
 
 # Fetch the source code
 RUN rm -rf /src && mkdir /src
-RUN git clone https://hub.jazz.net/git/cfsworkload/medicalrecords /src/medicalrecords --branch develop --single-branch
+RUN git clone https://hub.jazz.net/git/cfsworkload/medicalrecords /src/medicalrecords --branch master --single-branch
 
 # Install dependencies
 COPY . /src
-RUN cd /src/medicalrecords/node; npm install
+WORKDIR /src/medicalrecords/node
+RUN npm install
 
 EXPOSE 3000
 CMD ["npm", "start"]
