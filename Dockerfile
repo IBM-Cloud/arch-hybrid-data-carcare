@@ -8,7 +8,6 @@ RUN rm -rf /src && mkdir /src
 RUN git clone https://hub.jazz.net/git/cfsworkload/medicalrecords /src/medicalrecords --branch master --single-branch
 
 # Install dependencies
-COPY . /src
 WORKDIR /src/medicalrecords/node
 RUN npm install
 
