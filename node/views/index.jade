@@ -3,7 +3,7 @@ extends layout
 block content
   h1= title
   p Welcome to #{title}
-  form(method="POST" action="/volume/form" enctype="multipart/form-data")
+  form(method="POST" action="/api/vol/public/form" enctype="multipart/form-data")
     input(type="file" name="inputTypeFileNameField")
     input(type="text" name="fileNameIfNotNull")
     input(type="submit")
