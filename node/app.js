@@ -8,8 +8,10 @@ var busboy = require('connect-busboy');
 
 var routes = require('./routes/index');
 var file = require('./routes/file');
-
+var osv2 = require('./routes/osv2');
 var app = express();
+
+var debug = require('debug')('medicalrecords');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -26,6 +28,9 @@ app.use(busboy());
 
 app.use('/', routes);
 app.use('/api/vol/public', file);
+app.use('/api/obj/public', osv2);
+app.use('/api/obj/private', osv2);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

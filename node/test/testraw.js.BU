@@ -1,26 +1,35 @@
-process.env['DATADIR'] = 'tmpdata';
-var tmpData = process.env.DATADIR;
+// environment variable setup for test setup.  see config.js
+var tmpData = 'tmpdata';
+process.env.MR_CONTAINER = 'test';
+process.env.MR_DESTROY_CONTAINER = 'true';
+process.env.MR_DATADIR = tmpData;
+
+// Need to do this before initializing routes/files
+var rimraf = require('rimraf')
+rimraf.sync(tmpData);
+
+// normal
 var request = require('supertest');
 var express = require('express');
 var fs = require('fs');
-var rimraf = require('rimraf')
-rimraf.sync(tmpData);
 var app = require('../app.js');
-var rimraf = require('rimraf')
 var memoryStream = require('memory-streams');
 var assert = require('assert');
+
+
+
 
 
 request = request(app)
 
 var packageJson = fs.readFileSync('package.json', "utf8");
 
-request.post('/api/vol/public/form')
+request.post('/api/obj/public/form')
   .attach('file', 'package.json')
   .end(function(err, res){
     if (err) throw err;
-    request.get('/api/vol/public/package.json')
-      .expect('Content-Type', /text/)
+    request.get('/api/obj/public/package.json')
+      .expect('Content-Type', /json/)   // text for vol, json for obj  TODO why is this
       .expect(200)
       .end(function(err, res){
         if (err) throw err;
