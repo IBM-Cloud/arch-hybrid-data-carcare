@@ -5,7 +5,8 @@ RUN apt-get -y update && apt-get -y install curl git-core
 
 # Fetch the source code
 RUN rm -rf /src && mkdir /src
-RUN git clone https://hub.jazz.net/git/cfsworkload/medicalrecords /src/medicalrecords --branch master --single-branch
+#RUN git clone https://hub.jazz.net/git/cfsworkload/medicalrecords /src/medicalrecords --branch master --single-branch
+COPY . /src/medicalrecords
 
 # Install dependencies
 WORKDIR /src/medicalrecords/node
