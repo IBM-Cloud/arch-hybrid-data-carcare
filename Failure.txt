@@ -1,0 +1,12 @@
+vagrant@pquiringvm:~/git/medicalrecords/data/storage$ ice group create -v medicalrecordsvolume:/data -p 80 --name medicalrecordslocal acme/medicalrecordslocal
+Command failed with container cloud service
+Unauthorized failure
+Refreshing cf tokens
+5ca5a830-04bd-4584-8c8f-8edf05b5ad0d
+Created group medicalrecordslocal (id: 5ca5a830-04bd-4584-8c8f-8edf05b5ad0d)
+Minimum container instances: 1
+Maximum container instances: 2
+Desired container instances: 2
+vagrant@pquiringvm:~/git/medicalrecords/data/storage$ date
+Thu Jun  4 23:20:17 UTC 2015
+-------------------------------------------------------------------------------------------------------
