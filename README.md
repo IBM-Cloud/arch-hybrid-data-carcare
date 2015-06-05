@@ -143,10 +143,10 @@ Container Group:
 * verbs in the command do not match docker.  list instead of ps for example
 * can the container group be a command line switch in the upcoming docker CLI?
 
-Logging
+Monitoring/Logging
 
-* No instructions of the logging enablement for Docker.
-* Any reason not to include logging in the IBM supplied docker images?
+* No instructions of the logging enablement for Docker (current docs are conducive to enabling monitoring/logging for VMs).
+* Any reason not to include logging in the IBM supplied docker images? In reality we cannot expect the user to go through all the manual steps to enable monitoring/logging. It would make sense to provide a script that user can run (see [Provide script so user can enable monitoring/logging for containers/VMs](https://hub.jazz.net/ccm08/resource/itemName/com.ibm.team.workitem.WorkItem/91253)). A step further would be enabling monitoring/logging by default (see [Enable monitoring/logging in containers/VMs by default](https://hub.jazz.net/ccm08/resource/itemName/com.ibm.team.workitem.WorkItem/91254)).
 * Some of the docker requirements are not available in public repos available to docker build.
 * Advanced views do not work
 * The logging and monitoring service goes up and down in the GUI
