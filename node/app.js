@@ -9,6 +9,7 @@ var busboy = require('connect-busboy');
 var routes = require('./routes/index');
 var file = require('./routes/file');
 var osv2 = require('./routes/osv2');
+var onprem = require('./routes/onprem');
 var app = express();
 
 var debug = require('debug')('medicalrecords');
@@ -30,6 +31,7 @@ app.use('/', routes);
 app.use('/api/vol/public', file);
 app.use('/api/obj/public', osv2);
 app.use('/api/obj/private', osv2);
+app.use('/api/onprem/public', onprem);
 
 
 // catch 404 and forward to error handler

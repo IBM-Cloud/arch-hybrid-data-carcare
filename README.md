@@ -52,7 +52,7 @@ Object storage swap the vol -> obj
     curl -v -i -F "f=@$file -F "g=b.txt" $host/api/obj/public/form -X POST
     curl -v $host/api/obj/public/a.txtx -X DELETE
 
-Similarly it is possible to read from the on premise: chage **vol** to **premise**
+Similarly it is possible to read from the on premise: chage **vol** to **onpremise**
 
 ## Docker Image
 Create and run the docker image using the docker file:
@@ -123,59 +123,32 @@ Great, curl is returning a table of contents that indicates the file is present.
 ## Container Groups
 
     ice group create -v medicalrecordsvolume:/data -p 80 --name medicalrecordslocal acme/medicalrecordslocal
-    ice ip bind 129.41.232.130 medicalrecordslocal
+    ice route map --hostname medicalrecordslocal --domain mybluemix.net medicalrecordslocal
 
-### Current State of Bluemix - 6/4/2015
+    Ports: 80 | Autorecovery: Off
+Volumes: medicalrecordsvolume:/data | | Image: medicalrecordslocal:latest 
 
-Containers:
 
-* Container service does not work reliably.  ice commands fail for example.
-* Not possible to attach to a bluemix container.  This makes debugging painful.
-* ice commands return before they complete.  For example the run command finishes before the routes are ready.  What are the best practices in the development pipeline for testing?
-* Container service is very slow.
-* Can not bind a service to a container
-* I could not find the static url for a container like: medicalrecords.mybluemix.net
-* Docker is a fun experience on my computer or digital ocean.  Bluemix is frustrating.
+## On Premise repository
 
-Container Group:
+The on premise data store is being accessed through the secure gateway service.
+Using the bluemix UI create the secure gateway service.
 
-* Could not figure out how to bind an ip to the cg
-* verbs in the command do not match docker.  list instead of ps for example
-* can the container group be a command line switch in the upcoming docker CLI?
+* Create the gateway in the service.
+* Create the connection in the gateway.  As you will see below the IP address of the computer that is running the records program locally is 158.85.183.50 and the port will be 8080
 
-Logging
+On premise:
+* Follow the instructions to docker run the secure gateway docker image connecting back to the gateway above.  For me this was: docker run -d ibmcom/secure-gateway-client KhNfR9WOC8l_prod_ng
+* Run the on premise records app.  For me this was:  docker run -d -p 8080:80 registry-ice.ng.bluemix.net/acme/medicalrecordslocal
+* Do an ifconfig and verify that the IP address configured in the gateway, above, is correct.  For me ifconfig displayed the following so I'm good to go
 
-* No instructions of the logging enablement for Docker.
-* Any reason not to include logging in the IBM supplied docker images?
-* Some of the docker requirements are not available in public repos available to docker build.
-* Advanced views do not work
-* The logging and monitoring service goes up and down in the GUI
+    eth1      Link encap:Ethernet  HWaddr 06:9f:f1:b6:50:cc
+              inet addr:158.85.183.50  Bcast:158.85.183.63  Mask:255.255.255.224
 
-Build pipeline:
+On the computer that is running the secure gateway docker image I verified the following command returned some stuff from the records app.
 
-* What are in the images that are used for the test stages?  For example is node, jre, ... in them?
-* It is my job to install the software that is required?  Could I install things that would conflict with predefined requirements?
-* Could the stages be docker files or images supplied by my organization?
-* Why isn't the pipeline persisted in a file.  I want to keep this under source control.  I want to edit/copy/paste/clone.
+    # curl 158.85.183.50:8080
 
-SSO Service
+On any computer on the planet I could verify that the sg connection is working correctly.  In the bluemix ui open the info on the connection (you will find the connection within gateway which is in the secure gateway service).  For me the Cloud Host:Port was cap-sg-prd-2.integration.ibmcloud.com:15188
 
-* Very complicated. The free alternative is easy to configure and use.
-* Node code is not available in public npm repository.
-* More details coming next week
-
-Object Storage v2 Service
-
-* There is no documentation that explains the bluemix unique part of the API.
-* Is not possible to bind to the service normally for some orgs (including mine).
-
-Volumes
-
-* Straight forward to create and use in the CLI
-* Can not find size limits, current amount used, or information in the bluemix dashboard.
-* Can not determine $ cost
-
-All Services providing programmatic value (like SSO, Logging, Object Storage, ...)
-
-* Must provide development documentation for on premise use in a traditional desktop env.
-* SSO and Object Storage have this capability but no documenttion was provided.
+    $ curl cap-sg-prd-2.integration.ibmcloud.com:15188

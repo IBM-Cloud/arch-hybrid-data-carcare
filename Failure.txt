@@ -10,3 +10,24 @@ Desired container instances: 2
 vagrant@pquiringvm:~/git/medicalrecords/data/storage$ date
 Thu Jun  4 23:20:17 UTC 2015
 -------------------------------------------------------------------------------------------------------
+Fri Jun  5 19:34:19 CDT 2015
+created a cg from the gui and it hung in the gui.  The cg was created.
+
+Fri Jun  5 19:34:41 CDT 2015
+The list of containers could not be retrieved. Try again later.
+-------------------------------------------------------------------------------------------------------
+vagrant@pquiringvm:~$ ice group instances medicalrecordslocal
+Command failed with container cloud service
+<?xml version='1.0' ?>
+<env:Envelope xmlns:env='http://schemas.xmlsoap.org/soap/envelope/'>
+<env:Body>
+<env:Fault>
+<faultcode>env:Client</faultcode>
+<faultstring>Internal Error</faultstring>
+</env:Fault>
+</env:Body>
+</env:Envelope>
+vagrant@pquiringvm:~$ date
+Tue Jun  9 13:41:24 UTC 2015
+
+
