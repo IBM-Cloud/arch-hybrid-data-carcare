@@ -125,9 +125,6 @@ Great, curl is returning a table of contents that indicates the file is present.
     ice group create -v medicalrecordsvolume:/data -p 80 --name medicalrecordslocal acme/medicalrecordslocal
     ice route map --hostname medicalrecordslocal --domain mybluemix.net medicalrecordslocal
 
-    Ports: 80 | Autorecovery: Off
-Volumes: medicalrecordsvolume:/data | | Image: medicalrecordslocal:latest 
-
 
 ## On Premise repository
 
