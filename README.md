@@ -22,6 +22,11 @@ VM's were not in plan for June so containers were substituted.  Autoscaling was 
 * the /data directory on your computer will need to be writeable 
 * check out bin/www.js it will indicate what the port# is.  Currently it is http:localhost:80.  You can visit this in a browser.  See the curl examples below.
 
+## UI
+
+* Allows upload of a file to Object Storage, On Premise, and Volume on Disk
+* On page load the list of files in Object Storage, On Premise, and Volume on Disk are displayed
+
 ## test suite
 
 The test suite is run with mocha.
