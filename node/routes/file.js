@@ -7,19 +7,25 @@ var fs = require('fs');
 var rimraf = require('rimraf');
 var sanitizeFilename = require('sanitize-filename');
 var debug = require('debug')('file');
+var lockfile = require('lockfile');
 var config = require('../config');
 
 /*
  use the DATADIR environment if available otherwise use /data
  /data/storage - storage
- /data/tmp - temporary download
- */
+ /data/tmp - temporary download directory organized by group and hostname
+ /data/tmp/group_id/HOSTNAME - temporary directory for my instance to put files
 
-var dataDir = config.dataDir;
-var storageDir = path.join(dataDir, path.sep, 'storage');
-var tmpDir = path.join(dataDir, path.sep, 'tmp');
+ At startup the above directory structure will be created if it does not exist.
+ All group_ids that are not mine will be deleted to clean up in case of cruft left around from previous runs
+*/
+
+var ret = createStorageDirectoriesAndClean();
+var myTmpDir = ret.myTmpDir;
+var storageDir = ret.storageDir;
 var tmpFileNumber = 0;
 
+// make the directory and if it already exists do not fail
 function mkdir(dir) {
     try {
         fs.mkdirSync(dir);
@@ -29,11 +35,6 @@ function mkdir(dir) {
         throw(e);
     }
 }
-
-mkdir(dataDir, "755");
-mkdir(storageDir, "755");
-rimraf.sync(tmpDir);
-mkdir(tmpDir, "755");
 
 // Verify the filename is sane
 function saneFilename(fileName) {
@@ -45,15 +46,62 @@ function saneFilename(fileName) {
 }
 // generate a unique tmp file name
 function tmpFilename() {
-    return path.join(tmpDir, String(tmpFileNumber++));
+    return path.join(myTmpDir, String(tmpFileNumber++));
 }
 function storageFilename(fileName) {
     return path.join(storageDir, saneFilename(fileName));
 }
 
+// delete the file or directory and log it
+function cleanupFileOrDirectory(deleteMe) {
+    if (fs.existsSync(deleteMe)) {
+        console.log('cleaning up, deleting: ' + deleteMe);
+        rimraf.sync(deleteMe);
+    }
+}
+
+function createStorageDirectoriesAndClean() {
+    var dataDir = config.dataDir;
+    var storageDir = path.join(dataDir, path.sep, 'storage');
+    var group_id = saneFilename(process.env[config.group_id] || '53bedaf5-b358-442a-9383-bbe7243b6036');
+    var HOSTNAME = saneFilename(process.env[config.HOSTNAME] || 'instance-0001bd54');
+    var tmpDir = path.join(dataDir, path.sep, 'tmp');
+    var groupDir = path.join(tmpDir, path.sep, group_id);
+    var hostDir = path.join(groupDir, path.sep, HOSTNAME);
+
+    // create my directories
+    mkdir(dataDir, "755");
+    mkdir(storageDir, "755");
+    mkdir(tmpDir, "755");
+    mkdir(groupDir, "755");
+
+    //////////////////////////////////////////////////////
+    // Lock will insure one container at a time passes through this code
+    var physicalLockFile = path.join(dataDir, path.sep, 'lockfile.lock');
+    var lockFile = require('lockfile');
+    lockFile.lockSync(physicalLockFile);
+
+    // Delete the files and directories in the tmp directory that are not the current container group
+    var files = fs.readdirSync(tmpDir);
+    for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        if (file !== group_id) {
+            cleanupFileOrDirectory(path.join(tmpDir, path.sep, files[i]));
+        }
+    }
+
+    lockFile.unlockSync(physicalLockFile);
+    // Unlock
+    //////////////////////////////////////////////////////
+
+    cleanupFileOrDirectory(hostDir);
+    mkdir(hostDir, "755");
+    return {myTmpDir: hostDir, storageDir: storageDir};
+}
+
 // Write a file
 // curl -v -T /cygdrive/c/somefile -i localhost:3000/volume/storagefile -X PUT
-router.put('/:file', function (req, res, next) {
+router.put('/:file', function (req, res) {
     var fileName = req.params.file;
     debug('put /' + fileName);
     var tmpFile = tmpFilename();
@@ -64,21 +112,26 @@ router.put('/:file', function (req, res, next) {
     req.pipe(fs.createWriteStream(tmpFile));
 });
 
+/**
+ * @name Busboy#on
+ * @event
+ */
+
 // Write a file from a browser form
 // Note the similarity to the put function above.  Is there a way for a browser to use the mechanism above?
 // The form has two inputs: 1-file and 2-text file name that can override the file name
-router.post('/form', function (req, res, next) {
+router.post('/form', function (req, res) {
     var busboy = new Busboy({headers: req.headers, limits: {files: 1}});
     var finalFileName; // file name posted, overridden by a field
     var tmpFile = tmpFilename();
     busboy.on('field', function (fieldname, val, fieldnameTruncated, valTruncated) {
-        debug('post /form field:' + val);
+        debug('post /form field:' + val + ' fieldnameTruncated: ' + fieldnameTruncated + ' valTruncated: ' + valTruncated);
         if (val) {
             finalFileName = val; // override the file name
         }
     });
     busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
-        debug('post /form file:' + filename);
+        debug('post /form file:' + filename + ' encoding: ' + encoding + ' mimetype: ' + mimetype);
         if (!finalFileName) {
             finalFileName = filename; // if the file name has not been overridden use this one
         }
@@ -99,7 +152,7 @@ router.post('/form', function (req, res, next) {
 // return all of the files in the storage directory.  See swagger spec:
 // $ref: "#/definitions/fileDescription"
 // [{name:filename}, ...]
-router.get('/', function getFiles(req, res, next) {
+router.get('/', function getFiles(req, res) {
     debug('get /');
     fs.readdir(storageDir, function (err, files) {
         if (err) {
@@ -116,7 +169,7 @@ router.get('/', function getFiles(req, res, next) {
 
 // read a file
 // curl -v localhost:3000/volume/a.txtx
-router.get('/:file', function getFile(req, res, next) {
+router.get('/:file', function getFile(req, res) {
     var fileName = req.params.file;
     debug('get /' + fileName);
     var filePath = storageFilename(fileName);
@@ -137,7 +190,7 @@ router.get('/:file', function getFile(req, res, next) {
 
 // delete a file
 // curl -v localhost:3000/volume/swagger.yaml -X DELETE
-router.delete('/:file', function (req, res, next) {
+router.delete('/:file', function (req, res) {
     var fileName = req.params.file;
     debug('delete /' + fileName);
     var filePath = storageFilename(fileName);

@@ -1,22 +1,39 @@
+var assert = require("assert"); // node.js core module
+var request = require('supertest');
+var rimraf = require('rimraf');
+var fs = require('fs');
+var path = require('path');
+
 // environment variable setup for test setup.  see config.js
 var tmpData = 'tmpdata';
 process.env.MR_CONTAINER = 'test';
 process.env.MR_DESTROY_CONTAINER = 'true';
 process.env.MR_DATADIR = tmpData;
 
-// Need to do this before initializing routes/file.js
-var rimraf = require('rimraf')
-rimraf.sync(tmpData);
+var config = require('../config');
 
-// normal
-var assert = require("assert"); // node.js core module
-var request = require('supertest');
-var fs = require('fs');
+process.env[config.HOSTNAME] = 'host';
+process.env[config.group_id] = 'group';
+
+rimraf.sync(tmpData);
+fs.mkdirSync(tmpData);
+
+// Create some cruft to represent stuff left over from the last run.
+// The test below will verify this gets cleaned up.
+var tmpDir = path.join(tmpData, path.sep, 'tmp');
+fs.mkdirSync(tmpDir);
+var existingGroupDirThatShouldBeDeleted = path.join(tmpDir, path.sep, 'deadbeef-b358-442a-9383-bbe7deadbeef');
+fs.mkdirSync(existingGroupDirThatShouldBeDeleted);
+assert.equal(fs.existsSync(existingGroupDirThatShouldBeDeleted), true, 'created directory does not exist');
 
 var app = require('../app.js');
 var areq = request(app);
 
 describe('filesystem testing', function () {
+    it('verify clean up of cruft', function (done) {
+        assert.equal(fs.existsSync(existingGroupDirThatShouldBeDeleted), false, 'file not deleted during initialization');
+        done();
+    });
     it('get /', function (done) {
         areq.get('/api/vol/public')
             .expect('Content-Type', /json/)

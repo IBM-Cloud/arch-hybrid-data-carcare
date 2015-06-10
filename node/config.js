@@ -25,6 +25,9 @@ if (module.exports.containerDestroy) {
 
 // file system configuration
 module.exports.dataDir = process.env.MR_DATADIR || path.join(path.sep, 'data');    // default to /data and override in a container: docker run -v xxx:/data
+module.exports.tmp = 'tmp';
+module.exports.HOSTNAME = 'HOSTNAME';
+module.exports.group_id = 'group_id';
 
 // on premise conifguration
 // curl cap-sg-prd-2.integration.ibmcloud.com:15188

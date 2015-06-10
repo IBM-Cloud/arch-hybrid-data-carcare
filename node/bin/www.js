@@ -8,11 +8,13 @@ var app = require('../app');
 var debug = require('debug')('medicalrecords:server');
 var http = require('http');
 
+
 /**
  * Get port from environment and store in Express.
  */
 
-console.log(process.env);
+console.log('ENV: ' + process.env);
+console.log('node version: ' + process.version);
 var port = normalizePort(process.env.PORT || '80');
 app.set('port', port);
 

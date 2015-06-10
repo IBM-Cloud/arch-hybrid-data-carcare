@@ -7,6 +7,37 @@ var fs = require('fs');
 var app = require('../app.js');
 var areq = request(app);
 
+// see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find
+// polyfill the array find method
+if (!Array.prototype.find) {
+    Array.prototype.find = function(predicate) {
+        if (this == null) {
+            throw new TypeError('Array.prototype.find called on null or undefined');
+        }
+        if (typeof predicate !== 'function') {
+            throw new TypeError('predicate must be a function');
+        }
+        var list = Object(this);
+        var length = list.length >>> 0;
+        var thisArg = arguments[1];
+        var value;
+
+        for (var i = 0; i < length; i++) {
+            value = list[i];
+            if (predicate.call(thisArg, value, i, list)) {
+                return value;
+            }
+        }
+        return undefined;
+    };
+}
+
+function arrayOfObjectReturnElementContainingNameEqualValue(ary, member, value) {
+    ary.find(function(element) {
+        if (element[member] === value) {return element;}
+    });
+}
+
 describe('on premise storage', function () {
     it('get /', function (done) {
         areq.get('/api/onprem/public')
@@ -31,8 +62,10 @@ describe('on premise storage', function () {
             .expect('Content-Type', /json/)
             .expect(200)
             //.expect('[{"filename":"package.json"}]')
-            .expect(function (res) {
-                assert(res.body[0].name === 'package.json');
+            .expect(function(res) {
+                if (!arrayOfObjectReturnElementContainingNameEqualValue(res.body, 'name', 'package.json')) {
+                    return 'package.json not found in response to GET / after it was added'
+                }
             })
             .end(function (err, res) {
                 if (err) return done(err);
@@ -68,7 +101,11 @@ describe('on premise storage', function () {
         areq.get('/api/onprem/public')
             .expect('Content-Type', /json/)
             .expect(200)
-            .expect('[]')
+            .expect(function(res) {
+                if (arrayOfObjectReturnElementContainingNameEqualValue(res.body, 'name', 'package.json')) {
+                    return 'package.json return in response to GET / after it was deleted'
+                }
+            })
             .end(function (err, res) {
                 if (err) return done(err);
                 done();
