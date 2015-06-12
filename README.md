@@ -154,3 +154,18 @@ On the computer that is running the secure gateway docker image I verified the f
 On any computer on the planet I could verify that the sg connection is working correctly.  In the bluemix ui open the info on the connection (you will find the connection within gateway which is in the secure gateway service).  For me the Cloud Host:Port was cap-sg-prd-2.integration.ibmcloud.com:15188
 
     $ curl cap-sg-prd-2.integration.ibmcloud.com:15188
+
+# IDS Pipeline
+
+The IDS pipeline will consist of the follow stages which will be trigger upon pushing any change to the project:
+	1. Integration Tests - runs tests on the NodeJS code
+	2. Build - build the container image
+	3. Deploy to Staging - deploys the container group to the dev space of the organization
+	4. Load Test - runs a JMeter test script to generate a load on the server running in the dev space to test container group scaling and load balancing
+	5. Deploy to Production - deploys the container to the prod space of the organization using Active Deploy
+
+# Integration Tests
+# Build
+# Deploy to Staging
+# Load Test
+# Deploy to Production
