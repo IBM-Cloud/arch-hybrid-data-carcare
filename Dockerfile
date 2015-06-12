@@ -15,10 +15,10 @@ RUN apt-get update && apt-get -y install curl
 
 # Fetch the source code
 RUN rm -rf /src && mkdir /src
-COPY . /src/medicalrecords
+COPY . /src/medicar
 
 # Install dependencies
-WORKDIR /src/medicalrecords/node
+WORKDIR /src/medicar/node
 RUN npm install
 
 EXPOSE 80
