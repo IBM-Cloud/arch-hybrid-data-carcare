@@ -155,6 +155,91 @@ On any computer on the planet I could verify that the sg connection is working c
 
     $ curl cap-sg-prd-2.integration.ibmcloud.com:15188
 
+### Making Secure Gateway secure with TLS
+
+Here are the steps that would be needed to make the Secure Gateway secure:
+
+* From Bluemix dashboard, add the Secure Gateway service from the Integration category
+* In Add Service, select Leave unbound  for apps and Standard plan.  Click Create.
+* Click Add Gateway
+* Enter a name for the gateway, e.g. sgtls.  Then click on checkbox for Enforce security token on client.  Then click Connect.
+* Copy the docker command given in the Copy box:  docker run -it ibmcom/secure-gateway-client UtEvxKKGXuk_prod_ng
+* Log into the on-prem server with root or sudo privilege.  Run the docker command in the previous step above.
+* After the docker command is run, on the Secure Gateway dashboard in Bluemix, you should see that the tunnel has been established
+* Click on Add Destinations to connect to the on-prem app (e.g. medical-records app) behind the Secure Gateway Client on the on-prem server.  Fill in the name for the destination, the IP address (or hostname) and port of the on-prem app, and select TLS: Mutual Auth for this destination.
+* Under Advanced section, ensure that the checkbox for Auto generate cert and private key is checked.  For now, we don't configure client-side TLS because we are primarily interested in establishing a secure tunnel between our Bluemix app and the on-prem environment (i.e. the application-side TLS), not the connection between the Secure Gateway Client and the on-prem app.
+* After clicking I'm Done in the previous step, we can download the certificate and key (in a zip file) needed to connect to the on-prem app by clicking on the gear icon and select Download Keys.  Unzipping the certificate file has the following contents:
+
+	root@devops1:~/khoa/bm-objectstore/certificate# unzip cAMkmBrJozI_X4m_certs.zip
+	Archive:  cAMkmBrJozI_X4m_certs.zip
+  	inflating: DigiCertTrustedRoot.pem
+  	inflating: secureGatewayCert.pem
+  	inflating: DigiCertCA2.pem
+  	inflating: cAMkmBrJozI_X4m_cert.pem
+  	inflating: cAMkmBrJozI_X4m_key.pem
+
+* At this point, we can create a user-provided service that contains the on-prem app's destination and access information, as well as the certificate and key information in a json file.  For example, if the on-prem app is a database, the json file could look something like:
+'{"dbname": "<db name>","dbpw": "<dbpassword>","dbuser": "root","host": "<something.ibmcloud.com>","port": "<port number>","key":"<keyFileContents>", "cert":"<certFileContents>", ...}'
+
+Note that the key and cert information are provided as key value pairs in the json file.  The keyFileContents and certFileContents are stored in the <destination_id>_key.pem and <destination_id>_cert.pem files, respectively.  For example, in our example, here's the contents of the cAMkmBrJozI_X4m_key.pem file:
+
+	root@devops1:~/khoa/bm-objectstore/certificate# cat cAMkmBrJozI_X4m_key.pem
+	-----BEGIN PRIVATE KEY-----
+	MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7OAWA3GuvjF7s
+	0x1ix6/h92HjebXeU/69LoK3KOvxc6ntNKrnJ3F6cLN63MONXMBRYUP+s/FPHgTA
+	XHiUQTpatuk598mQBzIb9ZjnzmEtgGP+ki4RozHIJyCBg3fD5jySFQGgdDBLnSF/
+	CZyPJAvBXv91WTM5Yq3jPHWsYI5LFxyM1/XQA23A7W9V40f6ZwhVa89D8bcEcGDt
+	UuqIDgYUaCkdVgcbrU6gZ+hhdUM6s7frfBPoZiXhA8skjf6loP+NmSyq4Farn3iz
+	/NmxVojGMXLKC73lLJeyaS8a0US1BDuZHQZGnGHxjsfrb+isb7Jj0OvQqiT3Pp/k
+	Im7Thk7fAgMBAAECggEAeVUINAgl/gJB7sevTrpNYWu60/qoBCt5d0+yRVPO/Y9R
+	PDqa2+3zHD/4AZMbZP0MYnFf6Kzjobu5ppUHTEWttOa/5eKRjbcsIXScoPZegmen
+	5m8ETkfuVmINLgJu1tXawW29vSgvuIFgGP24qgfZWnvfoUSq7vDl8tPXC10UOtLm
+	xmsfbIe2/G8261zmS8JUjjA9dZCeO4Bl3/Mw1iuQIPLzT1JLA7mTVazVXei7JuPn
+	pJl0PeEpOYIwOVUTNpZQ9SiEw7KvRZvxxTHNmSXPtttd5HC6zc0QOPotimi0gwzd
+	uEBriTaDSm8j3CliAL4ma5CdCK2ZIhh9T37nsKWq6QKBgQDf9cb0AY3RqtMVK89P
+	2jywVeKAgfupVrE/wYHXH33gz5sHuCg6llOLbwV3MxC0XeN2ipZrd3ybwnM4g8dO
+	6sA17K12dxZUMDb+naiPyyuZNkaCnE6UrI7mFLy4guc4lW2oHpZv4zmv7NSH73U2
+	t63MKew9BxKiPIq/IRsoGBGMFQKBgQDWAKX2TWaZNdwhMLcYgbVZzy4akWRo2QmN
+	mesGXn0rboENM7JZvebbRtdGs7MFl3yJxq42mCRUaukqHEl1cQJ1jNQlLT2dV1nk
+	+b563BA6ua/UU9DmLoJH/446FlYsML7ss23e23yDeDDopWOHKsebMwWbSxFXwY7b
+	AXuMiCGIIwKBgBNOyxIqOCHFSmFe34aQ1/6TyO0vR5T3xlwqwJjdPCrvevwVYlJ6
+	t0UkEyKNonkKRxvnIsStDm8XOnu60Kn7DwsXFnVKGwCzD2qwCOIsr9uLlFSaSSQE
+	JGWtj/+QOYLlTwjZajrHKigCkOgPOtm2yCL70kQIohCei4+iuQah3JFpAoGBAM2b
+	ddi86NRO8R5aZa///zM4YP1Zr3UlAY6w0SQfaHdwBkGe575dPA51c6QURu4aa6cb
+	4onFhzIsPbUd1F4no8s48SJ+4vHm2RGr+ZylDlq9yPdhSBW/naB7IjUg/M4cT3Ov
+	uOIjUvAlbCg5rvRQ39J3JO3dI96CszQrqn6M1FqtAoGAIBmlXfX7vUbTWKJblHRd
+	EZTYTAQA3tEvhRNRM7KInA6WgL3fXurzR4JBAsN+z/9R4/OC93WtP4qEp14AsV2P
+	DvuAKfwDLH1lXSgxWFmFmVk2/hCkPg3UFoLdOiOBHLlVo/eBrcUGK59b3deidOot
+	xKOhe8y77M5dSwG5YITRBKw=
+	-----END PRIVATE KEY-----
+
+This whole content needs to be copied into the json file.
+
+* Run the cf cups command as follows:
+
+	cat <json_file> | xargs cf cups  -p
+
+* Bind the user-provided service to the Bluemix app, so that the app can access the credentials through VCAP_SERVICES.  Once the service is bound to our Bluemix app, the app can access VCAP_SERVICES as follows:
+
+	var VCAP_SERVICES = process.env.VCAP_SERVICES;
+	var userProvided = {};
+
+	if(VCAP_SERVICES){
+  		vcap = JSON.parse(VCAP_SERVICES);
+  		userProvided = vcap["user-provided"][0].credentials;
+  		console.log(vcap);
+	}
+
+	var options = {
+   		host: userProvided.host,
+   		port: userProvided.port,
+   		key: userProvided.key,
+   		cert: userProvided.cert,
+   		ca: userProvided.cacert,
+   		rejectUnauthorized: true
+	};
+
+
 # IDS Pipeline
 
 The IDS pipeline will consist of the follow stages which will be trigger upon pushing any change to the project:
