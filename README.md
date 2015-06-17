@@ -269,11 +269,11 @@ Scroll down a little further until you see the commented line that would call de
 The deploygroup.sh script will look for certain environment variables to trigger things such as setting up the route and adding the volume storage.  Go to the Environment Properties tab of the stage and add the following text properties:
 	ROUTE_HOSTNAME = medicar-staging
 	ROUTE_DOMAIN = mybluemix.net
-	OPTIONAL_ARGS = "-v medicarvolume:/data"
+	OPTIONAL_ARGS = "-v medicarstagingvolume:/data"
 The first two properties will be used to setup the route to the app once it is deployed and will result in the app being made available at medicar-staging.mybluemix.net.  The last property will be passed to the ICE command that deploys the container group and will attach the volume storage where files will be persisted across deployments of the app.
 
 Prior to running this stage of the pipeline, be sure to create the volume storage by running the following command.  It only needs to be run once.
-	ice volume create medicarvolume
+	ice volume create medicarstagingvolume
 
 Save the stage.
 
@@ -304,7 +304,7 @@ Also, set the Working Directory to tests since that is where all of the test fil
 Copy the follow script into the Test Command section:
 	#!/bin/bash
 	echo "Installing JMeter..."
-	apt-get -y install jmeter
+	sudo apt-get update && sudo apt-get -y install jmeter
 	
 	# Pass the location of the test inputs directory within the project to JMeter so 
 	# it knows where to find the input files.
@@ -312,7 +312,7 @@ Copy the follow script into the Test Command section:
 	
 	# Run the test
 	echo "Running JMeter load test..."
-	jmeter -n -JtestInputs=${test_inputs} -t ${test_script} -l ${results_file} -j ${log_file}
+	jmeter -n -Jjmeter.save.saveservice.output_format=csv -JtestInputs=${test_inputs} -t ${test_script} -l ${results_file} -j ${log_file}
 	
 	# Dump the log and the results into the console
 	echo "JMeter log:"
@@ -323,8 +323,8 @@ Copy the follow script into the Test Command section:
 	
 	# Check for errors and exit accordingly
 	errors="$(grep -c .*,.*,.*,.*,.*,.*,.*,false,.*,.* load.jtl)"
-	if [ errors ne 0 ]; then
-	        echo -e "${red}Load test failed.  ${errors} errors were found.${no_color}"
+	if [ "${errors}" -ne "0" ]; then
+        	echo -e "${red}Load test failed.  ${errors} errors were found.${no_color}"
 	        exit 1
 	fi
 After we set a few environment variables, this script will install JMeter, run the script, parse the results, and fail if there are errors.
@@ -337,4 +337,4 @@ On the Environment Properties tab, set the following Text Properties.  These wil
 Save the stage.
 
 ## Deploy to Production
-
+This is pretty much the same as the Deploy to Staging step as described above.  Just be sure to specify the prod space rather than the dev space and set the route and volume information to point to the production instances rather than the staging instances.
