@@ -140,7 +140,10 @@ router.post('/form', function (req, res) {
     busboy.on('finish', function () {
         debug('post /form rename:' + tmpFile + '->' + finalFileName);
         var storageFinalName = storageFilename(finalFileName);
-        res.writeHead(201, ''); // todo
+        // commenting - when using res.render(), you don't need to handle response manually i.e no need to call res.writeHead().
+        // refer http://stackoverflow.com/questions/11676556/node-js-express-jade-error-cant-set-headers-after-they-are-sent
+        //res.writeHead(200, { 'content-type': 'text/html' }); // todo
+        res.render('vol', { title: 'Volume on Disk' });
 
         fs.rename(tmpFile, storageFinalName, function () {
             res.end();

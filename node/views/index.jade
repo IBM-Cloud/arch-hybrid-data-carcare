@@ -1,55 +1,33 @@
 extends layout
-
 block content
-
-  h1= title
-
-  script(type='text/javascript').
-    function listFiles(urlpath) {
-      // Send a GET request to get list of all the files
-      xmlhttp = new XMLHttpRequest();
-      relurlpath = urlpath;
-      xmlhttp.open("GET", relurlpath, false);
-      xmlhttp.send();
-      // Parse the list
-      xmlDoc = xmlhttp.responseText;
-      obj = JSON.parse(xmlDoc);
-      // Create hyperlinks to the files and display in browser
-      for (num = 0; num < obj.length; num = num + 1) {
-        name = obj[num].name;
-        link = document.createElement('a');
-        link.textContent = name;
-        link.href = relurlpath + name;
-        document.body.appendChild(link);
-        para = document.createElement("P");
-        document.body.appendChild(para);
-      }
-    }
-
-  h2 Object Storage
-  h3 Upload File to Object Storage
-  form(method="POST" action="/api/obj/public/form" enctype="multipart/form-data")
-    input(type="file" name="inputFileNameObj")
-    input(type="submit" value="Upload")
-  h3 Files in Object Storage
-  script(type='text/javascript').
-    listFiles("/api/obj/public/");
-
-  h2 On Prem
-  h3 Upload File to On Prem
-  form(method="POST" action="/api/onprem/public/form" enctype="multipart/form-data")
-    input(type="file" name="inputTypeFileNameOnPrem")
-    input(type="submit" value="Upload")
-  h3 Files On Prem
-  script(type='text/javascript').
-    listFiles("/api/onprem/public/");
-
-  h2 Volume on Disk
-  h3 Upload File to Volume on Disk
-  form(method="POST" action="/api/vol/public/form" enctype="multipart/form-data")
-    input(type="file" name="inputTypeFileNameDisk")
-    input(type="submit" value="Upload")
-  h3 Files in Volume on Disk
-  script(type='text/javascript').
-    listFiles("/api/vol/public/");
-
+    // Shows how to align single line of text part left and part right. Introduce a <span> element then add css to it
+    h2
+        | IBM Guided Experience
+        span Made with IBM Bluemix
+    h1= title
+    h3
+        |  Medicar is an app that demonstrates usage of Hybrid Data Storage
+        |  capability using services in IBM Bluemix. The static vehicle information
+        |  (manuals, parts information, diagnostic data) is stored in IBM cloud via the
+        |  Object Storage V2 service. Confidential data is stored on premise and is
+        |  accessible via the Secure Gateway service.  Additional information can also be
+        |  on disk on the user's personal machine like a laptop. The user has access to all
+        |  the information irrespective of which data storage medium its stored in.
+    br
+    br
+    nav
+        a(href='/') All Files
+        |  |
+        a(href='osv2.html') Object Storage
+        |  |
+        a(href='onprem.html') On Premise
+        |  |
+        a(href='vol.html') On Disk
+        |  |
+    p
+    script(type='text/javascript').
+        listFiles("/api/obj/public/");
+    script(type='text/javascript').
+        listFiles("/api/onprem/public/");
+    script(type='text/javascript').
+        listFiles("/api/vol/public/");

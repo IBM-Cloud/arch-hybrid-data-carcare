@@ -1,0 +1,27 @@
+extends layout
+
+block content
+
+  h2
+    | IBM Guided Experience
+    span Made with IBM Bluemix
+
+  h1= title
+
+  br
+  br
+  nav
+    a(href='/') All Files
+    |  |
+    a(href='osv2.html') Object Storage
+    |  |
+    a(href='vol.html') On Disk
+    |  |
+
+  h4 Upload File to On Premise
+  form(method="POST" action="/api/onprem/public/form" enctype="multipart/form-data")
+    input(type="file" name="inputTypeFileNameOnPrem")
+    input(type="submit" value="Upload")
+  h4 Files On Premise
+  script(type='text/javascript').
+    listFiles("/api/onprem/public/");

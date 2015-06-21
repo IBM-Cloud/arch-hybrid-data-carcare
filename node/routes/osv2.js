@@ -65,6 +65,7 @@ router.post('/form', function (req, res) {
             readRequestIntoOsv2(finalFileName, client, file, res);
         });
         req.pipe(busboy);
+        res.render('osv2', { title: 'Object Storage' });
     });
 });
 
