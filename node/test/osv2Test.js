@@ -33,12 +33,9 @@ describe('object storage v2 tests', function () {
         areq.get('/api/obj/public')
             .expect('Content-Type', /json/)
             .expect(200)
-            //.expect('[{"filename":"package.json"}]')
-            .expect(function (res) {
-                assert(res.body[0].name === 'package.json');
-            })
             .end(function (err, res) {
                 if (err) return done(err);
+                assert(res.body[0].name === 'package.json');
                 done();
             });
     });

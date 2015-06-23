@@ -1,5 +1,5 @@
 'use strict';
-var debug = require('debug')('medicalrecords');
+var debug = require('debug')('medicar');
 var express = require('express');
 var router = express.Router();
 var http = require('http');
@@ -52,6 +52,7 @@ router.all('*', function (req, res) {
         console.log('got response');
 
         res.set(createResHeaders(onpremRes));
+        res.status(onpremRes.statusCode);
         onpremRes.pipe(res);
         onpremRes.on('end', function () {
             console.log('response done');

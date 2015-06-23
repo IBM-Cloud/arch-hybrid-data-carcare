@@ -1,0 +1,11 @@
+applications:
+- name: mr
+  disk_quota: 1024M
+  host: mr
+  path: .
+  domain: mybluemix.net
+  instances: 1
+  memory: 512M
+  env:
+    DEBUG: medicar
+    VERSIONENV: 3

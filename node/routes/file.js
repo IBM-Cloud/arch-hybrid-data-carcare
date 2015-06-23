@@ -166,7 +166,7 @@ router.get('/', function getFiles(req, res) {
         for (var i = 0; i < files.length; i++) {
             ret.push({'name': files[i]});
         }
-        res.status(200).json(ret).end();
+        res.status(200).json(ret);
     });
 });
 

@@ -46,7 +46,7 @@ describe('filesystem testing', function () {
     });
     it('post package.json /form', function (done) {
         areq.post('/api/vol/public/form')
-            .attach('file', 'package.json')
+                .attach('file', 'package.json')
             .end(function (err, res) {
                 if (err) return done(err);
                 done();
@@ -92,6 +92,14 @@ describe('filesystem testing', function () {
             .expect('Content-Type', /json/)
             .expect(200)
             .expect('[]')
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('get should fail /package.json', function (done) {
+        areq.get('/api/vol/public/package.json')
+            .expect(404)
             .end(function (err, res) {
                 if (err) return done(err);
                 done();

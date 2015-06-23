@@ -21,11 +21,13 @@ VM's were not in plan for June so containers were substituted.  Autoscaling was 
 * npm start
 * the /data directory on your computer will need to be writeable 
 * check out bin/www.js it will indicate what the port# is.  Currently it is http:localhost:80.  You can visit this in a browser.  See the curl examples below.
+* the /api/obj/... object storage requires credential configuration when run locally.  See OSV2 below.
 
 ## UI
 
-* Allows upload of a file to Object Storage, On Premise, and Volume on Disk
-* On page load the list of files in Object Storage, On Premise, and Volume on Disk are displayed
+* **NOTE - additonal configuration for Object Storage (OSV2) and On Premise is required (see below)**.  Volumes work with no additional configuration.
+* Allows upload of a file to Volume on disk, Object Storage,  and On Premise
+* On page load the list of files in Volume on disk, Object Storage and  On Premise are displayed
 
 ## test suite
 
@@ -44,8 +46,8 @@ Example curl from swift docs using cygwin.  -T upload a file.  -i include header
     curl -v $host/api/vol/public/
     curl -v $host/api/vol/public/a.txt -X GET
     curl -v $host/api/vol/public/a.txt -X DELETE
-    curl -v -i -F "f=@$file $host/api/vol/public/form -X POST
-    curl -v -i -F "f=@$file -F "g=b.txt" $host/api/vol/public/form -X POST
+    curl -v -i -F "f=@$file" $host/api/vol/public/form -X POST
+    curl -v -i -F "f=@$file" -F "g=b.txt" $host/api/vol/public/form -X POST
 
 Object storage swap the vol -> obj
 
@@ -53,13 +55,15 @@ Object storage swap the vol -> obj
     curl -v $host/api/obj/public/
     curl -v $host/api/obj/public/a.txt -X GET
     curl -v $host/api/obj/public/a.txt -X DELETE
-    curl -v -i -F "f=@$file $host/api/obj/public/form -X POST
-    curl -v -i -F "f=@$file -F "g=b.txt" $host/api/obj/public/form -X POST
-    curl -v $host/api/obj/public/a.txtx -X DELETE
+    curl -v -i -F "f=@$file" $host/api/obj/public/form -X POST
+    curl -v -i -F "f=@$file" -F "g=b.txt" $host/api/obj/public/form -X POST
+    curl -v $host/api/obj/public/a.txt -X DELETE
 
-Similarly it is possible to read from the on premise: chage **vol** to **onpremise**
+Similarly it is possible to read from the on premise: chage **vol** to **onprem**
 
 ## Docker Image
+See [Prerequisites for installing IBM Containers Extension (ICE)](https://www.ng.bluemix.net/docs/starters/container_cli_ov.html#container_prereq)
+This documentation assumes familiarity with docker and ice command line.
 Create and run the docker image using the docker file:
 
     $ docker build -t medicarlocal .
@@ -338,3 +342,49 @@ Save the stage.
 
 ## Deploy to Production
 This is pretty much the same as the Deploy to Staging step as described above.  Just be sure to specify the prod space rather than the dev space and set the route and volume information to point to the production instances rather than the staging instances.
+
+# OSV2 - Object Storage Version 2
+
+## Create OSV2 service
+
+This is a IBM hosted version of swift over open stack.
+Using the bluemix gui create the OSV2 service using the "Add Service or API" then choose "Object Storage (v2).
+The service can be bound to a Bluemix Application (note bluemix suppots Applications, Containers and Virtual Machines).
+See below for more information on containers.
+
+## Nodejs source code
+
+There are 3 different ways to configure the credential system for the OSV2 in this app.
+See the config.js source code and specifically the two exported variables:
+
+* bluemix binding (see below)
+* module.exports.processEnvVCAP_SERVICES - copy in bound credentials (use in non bluemix environment)
+* module.exports.osv2ServiceCredentials - copy in service credentials (use in non bluemix environment)
+
+As described below the proper way to bind the credentials when running on bluemix is to bind via the VCAP environment variable.
+When working on your desktop this won't be possible but the value of the environment variable can be added to the processEnvVCAP_SERVICES.
+Finally if the VCAP environment variable can not be determined check the service - it may provide the credentials which can be copied into osv2ServiceCredentials
+The code has examples of the kinds of strings that are expected.
+
+## Binding OSV2 on Bluemix
+
+It isn't possible to bind a service directly to a container.
+An intermediate Bluemix Cloud Foundry application is required.
+This is described in the container docs,
+at the time of this writing it could be found here [Optional: Binding a service to a container](https://www.ng.bluemix.net/docs/starters/container_ui.html#container_ui)
+
+In the Bluemix gui:
+
+* create a node.js application, give it the name medicarlocalbind
+* back in the dashboard click the medicarlocalbind app
+* click the "Bind a service or API" and bind the OSV2 service created earlier.
+
+Back on the command line:
+
+
+    ice ps
+    ice stop medicarlocal
+    ice rm medicarlocal
+    ice run -v medicarvolume:/data -p 80 --name medicarlocal --bind medicarlocalbind -e 'DEBUG=medicar' acme/medicarlocal
+    ice ip bind 129.41.232.130 medicarlocal
+    curl $host/api/vol/public/
