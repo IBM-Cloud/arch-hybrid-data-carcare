@@ -6,40 +6,13 @@ var Promise = require("bluebird");
 
 var client; // access this via the initializeOsv2ReturnClient
 
-/* globals Promise */
-/**
- * @name Promise
- * @property {function} then
- */
-
+// initialize with some hard coded defaults....
+osv2Authenticate.init(config.osv2ServiceCredentials, config.processEnvVCAP_SERVICES);
 
 // containerContext is {
 //   name: nameOfContainer,
 //   exists: trueIfContainerExists,
 // }
-
-// return a promise to create the container and resolve to containerContext
-// will change the containerContext.exists = true
-function optionallyCreateContainer(containerContext) {
-    return new Promise(function(resolve, reject) {
-        if (containerContext.exists) {
-            debug('container exists: ', containerContext.container);
-            resolve(containerContext);
-        } else {
-            debug('creating container: ', containerContext.container);
-            client.createContainer({name: containerContext.container}, function (err, createdContainer) {
-                if (err) {
-                    console.error('osv2 create container failed for: ' + container);
-                    reject(err);
-                } else {
-                    debug('created container: ' + createdContainer);
-                    containerContext.exists = true;
-                    resolve(containerContext);
-                }
-            });
-        }
-    });
-}
 
 // return promise to delete a container based on the config configuration
 // and change the resolved containerContext.exist = false
@@ -101,7 +74,6 @@ function initializeOsv2ReturnClient() {
             })
             .then(doesContainerExist)  // resolve containerContext
             .then(optionallyDeleteContainer) // resolve containerContext
-            .then(optionallyCreateContainer)  // resolve containerContext
             .then(function () {
                 return client; // resolve
             });
@@ -114,7 +86,6 @@ function initializeOsv2ReturnClient() {
  * @param callback function to call with a client parameter - see return value of require('pkgcloud').storage.createClient().
  */
 module.exports.callbackWithClientOrRespondOnError = function (res, callback) {
-    osv2Authenticate.init(config.osv2ServiceCredentials, config.processEnvVCAP_SERVICES);
     initializeOsv2ReturnClient() // resolve client
         .then(callback) // callback(client)
         .catch(function (err) {
@@ -123,4 +94,4 @@ module.exports.callbackWithClientOrRespondOnError = function (res, callback) {
             res.write('error resolving osv2 client');
             res.status(401).end();
         });
-}
+};

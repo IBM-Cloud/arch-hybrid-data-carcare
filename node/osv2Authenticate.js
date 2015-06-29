@@ -1,5 +1,5 @@
 'use strict';
-var rp = require('request-promise');
+var request = require('request');
 var pkgcloud = require('pkgcloud');
 var debug = require('debug')('medicar');
 var Promise = require("bluebird");
@@ -87,24 +87,25 @@ function requestServiceCredentialsFromVcapCredentials() {
     };
     var vcap_secret = "Basic " + new Buffer(credentials.username + ":" + credentials.password).toString("base64");
     var req_options = {
-        url: vcap_creds.auth_url,
         headers: {
             'accept': 'application/json',
             'Authorization': vcap_secret
         },
+        url: vcap_creds.auth_url,
         timeout: 20000,
-        method: 'GET',
-        resolveWithFullResponse: true
+        method: 'GET'
     };
 
-    return rp(req_options)
-        .then(function (res) {
+    return new Promise(function (resolve, reject) {
+        request(req_options, function (error, res, body) {
             if (res.statusCode == 200) {
-                return Promise.resolve(JSON.parse(res.body).CloudIntegration);
+                return resolve(JSON.parse(res.body).CloudIntegration);
             } else {
-                throw Error('request service creds from bound service did not return statusCode 200: ' + res);
+                return reject(Error('request service creds from bound service did not return statusCode 200: ' + res));
             }
+
         });
+    });
 }
 
 // return promise to respond with service credentials.

@@ -8,29 +8,11 @@ var request = require('supertest');
 var fs = require('fs');
 
 var app = require('../app.js');
-var areq = request(app);
+var areq = request.agent(app);
 
-describe('object storage v2 tests', function () {
-    it('get /', function (done) {
-        areq.get('/api/obj/public')
-            .expect('Content-Type', /json/)
-            .expect(200)
-            .expect('[]')
-            .end(function (err, res) {
-                if (err) return done(err);
-                done();
-            });
-    });
-    it('post package.json /form', function (done) {
-        areq.post('/api/obj/public/form')
-            .attach('file', 'package.json')
-            .end(function (err, res) {
-                if (err) return done(err);
-                done();
-            });
-    });
+function verifyPackageJsonThenDelete(url){
     it('get / contains package.json', function (done) {
-        areq.get('/api/obj/public')
+        areq.get(url)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function (err, res) {
@@ -40,7 +22,7 @@ describe('object storage v2 tests', function () {
             });
     });
     it('get /package.json', function (done) {
-        areq.get('/api/obj/public/package.json')
+        areq.get(url + '/package.json')
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function (err, res) {
@@ -48,16 +30,20 @@ describe('object storage v2 tests', function () {
                 if (err) return done(err);
                 assert.equal(packageJson, res.text, 'package.json comparison');
                 done();
-                //        var writer = new memoryStream.WritableStream();
-                //        res.on('end', function() {
-                //          console.log(packageJson);
-                //          console.log(writer.toBuffer());
-                //        });
-                //        res.pipe(writer);
+            });
+    });
+    it('get / contains package.json', function (done) {
+        areq.get(url)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function (err, res) {
+                if (err) return done(err);
+                assert(res.body[0].name === 'package.json');
+                done();
             });
     });
     it('delete /package.json', function (done) {
-        areq.delete('/api/obj/public/package.json')
+        areq.delete(url + '/package.json')
             .expect(200)
             .end(function (err, res) {
                 if (err) return done(err);
@@ -65,7 +51,7 @@ describe('object storage v2 tests', function () {
             });
     });
     it('get / - package.json should be gone', function (done) {
-        areq.get('/api/obj/public')
+        areq.get(url)
             .expect('Content-Type', /json/)
             .expect(200)
             .expect('[]')
@@ -74,4 +60,69 @@ describe('object storage v2 tests', function () {
                 done();
             });
     });
+
+}
+
+function osv2TestUrl(url) {
+    it('delete /', function (done) {
+        areq.delete(url)
+            .expect(200)
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('get /', function (done) {
+        areq.get(url)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .expect('[]')
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('put package.json /', function (done) {
+        var req = areq.put(url + '/package.json');
+        var fileStream = fs.createReadStream('package.json');
+        req.on('response', function() {
+            done();
+        });
+        req.on('error', function(err) {
+            done(err);
+        });
+        fileStream.pipe(req);
+    });
+    verifyPackageJsonThenDelete(url);
+
+    it('post package.json /form', function (done) {
+        areq.post(url + '/form')
+            .attach('file', 'package.json')
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    verifyPackageJsonThenDelete(url);
+}
+
+
+describe('object storage public v2 tests', function () {
+    osv2TestUrl('/api/obj/public');
+});
+
+describe('object storage private v2 tests', function () {
+    // osv2TestUrl('/api/obj/public');
+    it('post good login credentials and stay logged in for the rest of the tests', function (done) {
+        areq
+            .post('/login')
+            .set('Content-Type', 'application/x-www-form-urlencoded')
+            .send('username=powell&password=ppw')
+            .expect(302)    // todo keep synced with code
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    osv2TestUrl('/api/obj/private');
 });

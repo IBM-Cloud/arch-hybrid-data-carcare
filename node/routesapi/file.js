@@ -1,14 +1,14 @@
 'use strict';
 var express = require('express');
 var router = express.Router();
-var Busboy = require('busboy');
 var path = require('path');
 var fs = require('fs');
 var rimraf = require('rimraf');
 var sanitizeFilename = require('sanitize-filename');
-var debug = require('debug')('file');
+var debug = require('debug')('medicar');
 var lockfile = require('lockfile');
 var config = require('../config');
+var privateBaseUrl = '/api/vol/private';
 
 /*
  use the DATADIR environment if available otherwise use /data
@@ -23,6 +23,7 @@ var config = require('../config');
 var ret = createStorageDirectoriesAndClean();
 var myTmpDir = ret.myTmpDir;
 var storageDir = ret.storageDir;
+var privateDir = ret.privateDir;
 var tmpFileNumber = 0;
 
 // make the directory and if it already exists do not fail
@@ -48,10 +49,6 @@ function saneFilename(fileName) {
 function tmpFilename() {
     return path.join(myTmpDir, String(tmpFileNumber++));
 }
-function storageFilename(fileName) {
-    return path.join(storageDir, saneFilename(fileName));
-}
-
 // delete the file or directory and log it
 function cleanupFileOrDirectory(deleteMe) {
     if (fs.existsSync(deleteMe)) {
@@ -63,6 +60,7 @@ function cleanupFileOrDirectory(deleteMe) {
 function createStorageDirectoriesAndClean() {
     var dataDir = config.dataDir;
     var storageDir = path.join(dataDir, path.sep, 'storage');
+    var privateDir = path.join(dataDir, path.sep, 'private');
     var group_id = saneFilename(process.env[config.group_id] || '53bedaf5-b358-442a-9383-bbe7243b6036');
     var HOSTNAME = saneFilename(process.env[config.HOSTNAME] || 'instance-0001bd54');
     var tmpDir = path.join(dataDir, path.sep, 'tmp');
@@ -72,6 +70,7 @@ function createStorageDirectoriesAndClean() {
     // create my directories
     mkdir(dataDir, "755");
     mkdir(storageDir, "755");
+    mkdir(privateDir, "755");
     mkdir(tmpDir, "755");
     mkdir(groupDir, "755");
 
@@ -96,68 +95,95 @@ function createStorageDirectoriesAndClean() {
 
     cleanupFileOrDirectory(hostDir);
     mkdir(hostDir, "755");
-    return {myTmpDir: hostDir, storageDir: storageDir};
+    return {myTmpDir: hostDir, storageDir: storageDir, privateDir: privateDir};
 }
+
+// support the API
+
+
+// given just a req and a fileName return a storage dir
+function storageFilename(req, fileName) {
+    return path.join(getStorageDirCreateIfNeeded(req), saneFilename(fileName));
+}
+
+// req contains the user id needed to determine the path.  privateFile is true for private files.
+function getStorageFilenamePublicPrivateCreateParentDirIfNeeded(req, fileName, privateFile) {
+    return path.join(getStorageDirCreateIfNeededPublicPrivate(req, privateFile), saneFilename(fileName));
+}
+
+// get the public or a user specific private file name
+function getStorageDirCreateIfNeeded(req) {
+    if (req.baseUrl === privateBaseUrl) {
+        return getStorageDirCreateIfNeededPublicPrivate(req, /*privateFile*/ true);
+    } else {
+        return getStorageDirCreateIfNeededPublicPrivate(req, /*privateFile*/ false);
+    }
+}
+
+// public directory name is the storageDir.
+// private directory name is derived from the user id
+function getStorageDirCreateIfNeededPublicPrivate(req, privateFile) {
+    if (privateFile) {
+        var privateDirectory = path.join(privateDir, req.user.id);  // this should be safe since middleware has verified this
+        if (!fs.existsSync(privateDirectory)) {
+            fs.mkdirSync(privateDirectory);
+        }
+        return privateDirectory;
+    } else {
+        return storageDir;
+    }
+}
+
+// write a file from a stream through a temp file then rename to a destination
+// file path where the parent directory already exists.
+function writeFileFromStream(readStream, destinationFilePath, callback) {
+    var tmpFile = tmpFilename();
+    debug('write to file: ' + tmpFile + ' then rename to: ' + destinationFilePath);
+    readStream.on('end', function () {
+        fs.rename(tmpFile, destinationFilePath, function (err) {
+            debug('rename to: ' + destinationFilePath);
+            if (err) {
+                throw(Error(err)); // not recovering from this
+            } else {
+                callback();
+            }
+        });
+    });
+    readStream.pipe(fs.createWriteStream(tmpFile));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// API
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Write a file from a stream provided by the GUI.  No part of the REST API
+module.exports.post = function(req, res, readStream, fileName, privateName, callback) {
+    debug('post file from gui /' + fileName);
+    var destinationFileName = getStorageFilenamePublicPrivateCreateParentDirIfNeeded(req, fileName, privateName);
+    writeFileFromStream(readStream, destinationFileName, function () {
+        callback && callback(res);
+    });
+};
+
+// REST API
 
 // Write a file
 // curl -v -T /cygdrive/c/somefile -i localhost:3000/volume/storagefile -X PUT
 router.put('/:file', function (req, res) {
     var fileName = req.params.file;
     debug('put /' + fileName);
-    var tmpFile = tmpFilename();
-    req.on('end', function () {
-        fs.rename(tmpFile, storageFilename(fileName));
+    var destinationFilePath = storageFilename(req, fileName);
+    writeFileFromStream(req, destinationFilePath, function() {
         res.end();
     });
-    req.pipe(fs.createWriteStream(tmpFile));
-});
-
-/**
- * @name Busboy#on
- * @event
- */
-
-// Write a file from a browser form
-// Note the similarity to the put function above.  Is there a way for a browser to use the mechanism above?
-// The form has two inputs: 1-file and 2-text file name that can override the file name
-router.post('/form', function (req, res) {
-    var busboy = new Busboy({headers: req.headers, limits: {files: 1}});
-    var finalFileName; // file name posted, overridden by a field
-    var tmpFile = tmpFilename();
-    busboy.on('field', function (fieldname, val, fieldnameTruncated, valTruncated) {
-        debug('post /form field:' + val + ' fieldnameTruncated: ' + fieldnameTruncated + ' valTruncated: ' + valTruncated);
-        if (val) {
-            finalFileName = val; // override the file name
-        }
-    });
-    busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
-        debug('post /form file:' + filename + ' encoding: ' + encoding + ' mimetype: ' + mimetype);
-        if (!finalFileName) {
-            finalFileName = filename; // if the file name has not been overridden use this one
-        }
-        file.pipe(fs.createWriteStream(tmpFile));
-    });
-    busboy.on('finish', function () {
-        debug('post /form rename:' + tmpFile + '->' + finalFileName);
-        var storageFinalName = storageFilename(finalFileName);
-        // commenting - when using res.render(), you don't need to handle response manually i.e no need to call res.writeHead().
-        // refer http://stackoverflow.com/questions/11676556/node-js-express-jade-error-cant-set-headers-after-they-are-sent
-        //res.writeHead(200, { 'content-type': 'text/html' }); // todo
-        res.render('vol', { title: 'Volume on Disk' });
-
-        fs.rename(tmpFile, storageFinalName, function () {
-            res.end();
-        });
-    });
-    req.pipe(busboy);
 });
 
 // return all of the files in the storage directory.  See swagger spec:
 // $ref: "#/definitions/fileDescription"
 // [{name:filename}, ...]
 router.get('/', function getFiles(req, res) {
-    debug('get /');
-    fs.readdir(storageDir, function (err, files) {
+    debug('get file /');
+    fs.readdir(getStorageDirCreateIfNeeded(req), function (err, files) {
         if (err) {
             res.status(404).json(err).end();
             return;
@@ -175,7 +201,7 @@ router.get('/', function getFiles(req, res) {
 router.get('/:file', function getFile(req, res) {
     var fileName = req.params.file;
     debug('get /' + fileName);
-    var filePath = storageFilename(fileName);
+    var filePath = storageFilename(req, fileName);
     fs.stat(filePath, function (err, stat) {
         if (err) {
             res.status(404).json(err).end();
@@ -196,7 +222,7 @@ router.get('/:file', function getFile(req, res) {
 router.delete('/:file', function (req, res) {
     var fileName = req.params.file;
     debug('delete /' + fileName);
-    var filePath = storageFilename(fileName);
+    var filePath = storageFilename(req, fileName);
     fs.unlink(filePath, function (err) {
         if (err) {
             res.status(404).json(err).end();
@@ -206,4 +232,4 @@ router.delete('/:file', function (req, res) {
     });
 });
 
-module.exports = router;
+module.exports.router = router;

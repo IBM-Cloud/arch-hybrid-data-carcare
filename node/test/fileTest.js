@@ -27,43 +27,11 @@ fs.mkdirSync(existingGroupDirThatShouldBeDeleted);
 assert.equal(fs.existsSync(existingGroupDirThatShouldBeDeleted), true, 'created directory does not exist');
 
 var app = require('../app.js');
-var areq = request(app);
+var areq = request.agent(app);
+function verifyPackageJsonThenDelete(url) {
 
-describe('filesystem testing', function () {
-    it('verify clean up of cruft', function (done) {
-        assert.equal(fs.existsSync(existingGroupDirThatShouldBeDeleted), false, 'file not deleted during initialization');
-        done();
-    });
-    it('get /', function (done) {
-        areq.get('/api/vol/public')
-            .expect('Content-Type', /json/)
-            .expect(200)
-            .expect('[]')
-            .end(function (err, res) {
-                if (err) return done(err);
-                done();
-            });
-    });
-    it('post package.json /form', function (done) {
-        areq.post('/api/vol/public/form')
-                .attach('file', 'package.json')
-            .end(function (err, res) {
-                if (err) return done(err);
-                done();
-            });
-    });
-    it('get / contains package.json', function (done) {
-        areq.get('/api/vol/public')
-            .expect('Content-Type', /json/)
-            .expect(200)
-            .expect('[{"name":"package.json"}]')
-            .end(function (err, res) {
-                if (err) return done(err);
-                done();
-            });
-    });
     it('get /package.json', function (done) {
-        areq.get('/api/vol/public/package.json')
+        areq.get(url + '/package.json')
             .expect('Content-Type', /text/)
             .expect(200)
             .end(function (err, res) {
@@ -80,7 +48,7 @@ describe('filesystem testing', function () {
             });
     });
     it('delete /package.json', function (done) {
-        areq.delete('/api/vol/public/package.json')
+        areq.delete(url + '/package.json')
             .expect(200)
             .end(function (err, res) {
                 if (err) return done(err);
@@ -88,7 +56,7 @@ describe('filesystem testing', function () {
             });
     });
     it('get / - package.json should be gone', function (done) {
-        areq.get('/api/vol/public')
+        areq.get(url)
             .expect('Content-Type', /json/)
             .expect(200)
             .expect('[]')
@@ -98,11 +66,97 @@ describe('filesystem testing', function () {
             });
     });
     it('get should fail /package.json', function (done) {
-        areq.get('/api/vol/public/package.json')
+        areq.get(url + '/package.json')
             .expect(404)
             .end(function (err, res) {
                 if (err) return done(err);
                 done();
             });
     });
+}
+
+function fileTestUrl(url) {
+    it('get /', function (done) {
+        areq.get(url)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .expect('[]')
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('post package.json /form', function (done) {
+        areq.post(url + '/form')
+            .attach('file', 'package.json')
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('get / contains package.json', function (done) {
+        areq.get(url)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .expect('[{"name":"package.json"}]')
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    verifyPackageJsonThenDelete(url);
+    it('put package.json /', function (done) {
+        var req = areq.put(url + '/package.json');
+        var fileStream = fs.createReadStream('package.json');
+        req.on('response', function() {
+            done();
+        });
+        req.on('error', function(err) {
+            done(err);
+        });
+        fileStream.pipe(req);
+    });
+    verifyPackageJsonThenDelete(url);
+}
+
+describe('public filesystem testing', function () {
+    it('verify clean up of cruft', function (done) {
+        assert.equal(fs.existsSync(existingGroupDirThatShouldBeDeleted), false, 'file not deleted during initialization');
+        done();
+    });
+    fileTestUrl('/api/vol/public');
+});
+
+describe('private filesystem testing', function () {
+    it('post bad login credentials', function (done) {
+        areq
+            .post('/login')
+            .set('Content-Type', 'application/x-www-form-urlencoded')
+            .send('username=x&password=x')
+            .expect(302)    // expecting a redirect back to the login page on bad passwords
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('get / when not logged in', function (done) {
+        areq.get('/api/vol/private')
+            .expect(401)
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('post good login credentials and stay logged in for the rest of the tests', function (done) {
+        areq
+            .post('/login')
+            .set('Content-Type', 'application/x-www-form-urlencoded')
+            .send('username=powell&password=ppw')
+            .expect(302)    // todo keep synced with code
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    fileTestUrl('/api/vol/private');
 });

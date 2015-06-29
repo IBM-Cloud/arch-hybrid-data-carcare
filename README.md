@@ -388,3 +388,17 @@ Back on the command line:
     ice run -v medicarvolume:/data -p 80 --name medicarlocal --bind medicarlocalbind -e 'DEBUG=medicar' acme/medicarlocal
     ice ip bind 129.41.232.130 medicarlocal
     curl $host/api/vol/public/
+
+## Credential and Session Handling
+To allow access to the private storage areas user credentials must be provided.
+For API these can be provided in the curl commands (or equivalent) via the -u user:password
+
+    curl -u powell:ppw $host/api/vol/private
+
+    curl -v -i -T $file $host/api/vol/public/a.txt -X PUT
+    curl -v $host/api/vol/public/
+    curl -v $host/api/vol/public/a.txt -X GET
+    curl -v -i -F "f=@$file" $host/api/vol/public/form -X POST
+    curl -v -i -F "f=@$file" -F "g=b.txt" $host/api/vol/public/form -X POST
+    curl -v $host/api/vol/public/a.txt -X DELETE
+
