@@ -47,7 +47,7 @@ Example curl from swift docs using cygwin.  -T upload a file.  -i include header
     curl -v $host/api/vol/public/a.txt -X GET
     curl -v $host/api/vol/public/a.txt -X DELETE
     curl -v -i -F "f=@$file" $host/api/vol/public/form -X POST
-    curl -v -i -F "f=@$file" -F "g=b.txt" $host/api/vol/public/form -X POST
+    curl -v -i -F "g=b.txt" -F "f=@$file" $host/api/vol/public/form -X POST
 
 Object storage swap the vol -> obj
 
@@ -56,7 +56,7 @@ Object storage swap the vol -> obj
     curl -v $host/api/obj/public/a.txt -X GET
     curl -v $host/api/obj/public/a.txt -X DELETE
     curl -v -i -F "f=@$file" $host/api/obj/public/form -X POST
-    curl -v -i -F "f=@$file" -F "g=b.txt" $host/api/obj/public/form -X POST
+    curl -v -i -F "g=b.txt" -F "f=@$file" $host/api/obj/public/form -X POST
     curl -v $host/api/obj/public/a.txt -X DELETE
 
 Similarly it is possible to read from the on premise: chage **vol** to **onprem**
@@ -394,11 +394,11 @@ To allow access to the private storage areas user credentials must be provided.
 For API these can be provided in the curl commands (or equivalent) via the -u user:password
 
     curl -u powell:ppw $host/api/vol/private
+    curl -v -u powell:ppw -i -T $file $host/api/vol/private/a.txt -X PUT
+    curl -v -u powell:ppw $host/api/vol/private/
 
-    curl -v -i -T $file $host/api/vol/public/a.txt -X PUT
-    curl -v $host/api/vol/public/
-    curl -v $host/api/vol/public/a.txt -X GET
-    curl -v -i -F "f=@$file" $host/api/vol/public/form -X POST
-    curl -v -i -F "f=@$file" -F "g=b.txt" $host/api/vol/public/form -X POST
-    curl -v $host/api/vol/public/a.txt -X DELETE
+    curl -v -u powell:ppw $host/api/vol/private/a.txt -X GET
+    curl -v -u powell:ppw -i -F "f=@$file" $host/api/vol/private/form -X POST
+    curl -v -u powell:ppw -i -F "g=b.txt" -F "f=@$file" $host/api/vol/private/form -X POST
+    curl -v -u powell:ppw $host/api/vol/private/a.txt -X DELETE
 

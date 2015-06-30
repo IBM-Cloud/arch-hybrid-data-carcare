@@ -8,7 +8,6 @@ var sanitizeFilename = require('sanitize-filename');
 var debug = require('debug')('medicar');
 var lockfile = require('lockfile');
 var config = require('../config');
-var privateBaseUrl = '/api/vol/private';
 
 /*
  use the DATADIR environment if available otherwise use /data
@@ -106,24 +105,19 @@ function storageFilename(req, fileName) {
     return path.join(getStorageDirCreateIfNeeded(req), saneFilename(fileName));
 }
 
-// req contains the user id needed to determine the path.  privateFile is true for private files.
-function getStorageFilenamePublicPrivateCreateParentDirIfNeeded(req, fileName, privateFile) {
-    return path.join(getStorageDirCreateIfNeededPublicPrivate(req, privateFile), saneFilename(fileName));
+// req contains the user id needed to determine the path for private files
+function getStorageFilenameCreateParentDirIfNeeded(req, fileName) {
+    return path.join(getStorageDirCreateIfNeeded(req), saneFilename(fileName));
 }
 
-// get the public or a user specific private file name
+// requests to the private URLs have been marked by earlier layers
+function privateReq(req) {
+    return req.medicar && req.medicar.private;
+}
+
+// get the public or a user specific private directory
 function getStorageDirCreateIfNeeded(req) {
-    if (req.baseUrl === privateBaseUrl) {
-        return getStorageDirCreateIfNeededPublicPrivate(req, /*privateFile*/ true);
-    } else {
-        return getStorageDirCreateIfNeededPublicPrivate(req, /*privateFile*/ false);
-    }
-}
-
-// public directory name is the storageDir.
-// private directory name is derived from the user id
-function getStorageDirCreateIfNeededPublicPrivate(req, privateFile) {
-    if (privateFile) {
+    if (privateReq(req)) {
         var privateDirectory = path.join(privateDir, req.user.id);  // this should be safe since middleware has verified this
         if (!fs.existsSync(privateDirectory)) {
             fs.mkdirSync(privateDirectory);
@@ -157,9 +151,9 @@ function writeFileFromStream(readStream, destinationFilePath, callback) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Write a file from a stream provided by the GUI.  No part of the REST API
-module.exports.post = function(req, res, readStream, fileName, privateName, callback) {
+module.exports.post = function(req, res, readStream, fileName, callback) {
     debug('post file from gui /' + fileName);
-    var destinationFileName = getStorageFilenamePublicPrivateCreateParentDirIfNeeded(req, fileName, privateName);
+    var destinationFileName = getStorageFilenameCreateParentDirIfNeeded(req, fileName);
     writeFileFromStream(readStream, destinationFileName, function () {
         callback && callback(res);
     });

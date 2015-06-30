@@ -17,6 +17,8 @@ var login = require('./routes/login');
 var volumeFileRoute = require('./routesapi/file').router;
 var osv2 = require('./routesapi/osv2').router;
 var onprem = require('./routesapi/onprem');
+var BasicStrategy = require('passport-http').BasicStrategy;
+var basicAuth = require('basic-auth'); // todo
 var app = express();
 
 var debug = require('debug')('medicar');
@@ -98,10 +100,11 @@ function waitForContactThenPushSessionAndPassport(req, res, next) {
     passport.deserializeUser(function (obj, done) {
         done(null, obj);
     });
+
     var users = {root: {password: 'rpw', id:'0'}, powell: {password: 'ppw', id:'1'}};
-    passport.use(new passportLocal(
-        function (username, password, done) {
-            var user = users[username];
+    function getIdForUserPassword(username, password, done) {
+        var user = users[username];
+        process.nextTick(function () {  // make sure the call backs are working correctly
             if (user && user.password === password) {
                 return done(null, {
                     id: user.id
@@ -109,44 +112,37 @@ function waitForContactThenPushSessionAndPassport(req, res, next) {
             } else {
                 return done(null, false, {message: 'Incorrect username/password.'});
             }
-        }
-    ));
-
-    app.post('/login', passport.authenticate('local', {successRedirect: '/', failureRedirect: '/login'}));
-    app.use('/login', login);
-
-    // todo remove this play stuff
-    app.get('/play', function (req, res) {
-        if (req.session) {
-            console.log(req.session);
-        } else {
-            console.log('no session');
-        }
-        if (req.user) {
-            console.log(req.user);
-        }
-        res.send('play: got it');
-    });
-
-    // respond with a 401 if not logged in.  Add this to any path that is private.
-    function checkAuthorized(req, res, next){
-        if (req.sessionID && req.user && req.user.id) {
-            return next();
-        } else {
-            res.status(401).end();
-        }
+        });
     }
 
-    // any part of the gui that requires authorization should be in /private
-    app.all('/private', checkAuthorized);
+    // load the strategies into passport
+    passport.use(new passportLocal(getIdForUserPassword));
+    passport.use(new BasicStrategy({}, getIdForUserPassword));
+    // google, facebook, ...
 
-    // return 401 if not logged in.
+    // The /login page will post a login with user credentials
+    app.use('/login', login);
+    app.post('/login', passport.authenticate('local', {successRedirect: '/', failureRedirect: '/login'}));
+
+    // basic authentication is good for curl commands, jmeter, etc, do not persist in the session.
+    basicAuthentication = passport.authenticate('basic', {session: false});
+
+    // Mark the request as private (req.medicar.private == true)
+    // if the session has not been authenticated via a passport session then give basic a try
+     function privateCheckAuthorized(req, res, next) {
+        req.medicar = {private: true};
+        if (req.isAuthenticated()) { return next(null); }
+        basicAuthentication(req, res, next);
+    }
+
+    // configure private paths identically
     function appUseCheckAuthorized(path, handler) {
-        app.all(path, checkAuthorized);
+        app.all(path, privateCheckAuthorized);
+        app.all(path  + '/*', privateCheckAuthorized);
         app.use(path, handler);
     }
 
-    // REST API
+    // REST API - private portion
     appUseCheckAuthorized('/api/vol/private', volumeFileRoute);
     appUseCheckAuthorized('/api/obj/private', osv2);
     appUseCheckAuthorized('/api/onprem/private', onprem);

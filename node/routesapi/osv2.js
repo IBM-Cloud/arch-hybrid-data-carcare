@@ -5,21 +5,19 @@ var osv2Connect = require('../osv2Initialize');
 var config = require('../config');
 
 var router = express.Router();
-var privateBaseUrl = '/api/obj/private';
+
+// requests to the private URLs have been marked by earlier layers
+function privateReq(req) {
+    return req.medicar && req.medicar.private;
+}
 
 // container name is either the user id (if it is a private url) or the public name from the config
-function privateReq(req) {
-    return req.baseUrl === privateBaseUrl;
-}
-function containerNameFromBoolAndReq(privateName, req) {
-    if (privateName) {
+function containerNameFromReq(req) {
+    if (privateReq(req)) {
         return req.user.id;
     } else {
         return config.container;
     }
-}
-function containerNameFromReq(req) {
-    return containerNameFromBoolAndReq(privateReq(req), req);
 }
 
 // read the req into the fileName within the osv2 client and send appropriate res
@@ -72,9 +70,9 @@ function performOperationIfFailCreateContainerPerformOperationAgain(req, res, co
 }
 
 // Write a file from a stream provided by the GUI.  No part of the REST API
-module.exports.post = function(req, res, readStream, fileName, privateName, callback) {
+module.exports.post = function(req, res, readStream, fileName, callback) {
     debug('post obj from gui /' + fileName);
-    performOperationIfFailCreateContainerPerformOperationAgain(req, res, containerNameFromBoolAndReq(privateName, req), function (req, res, client, containerName, againCallback) {
+    performOperationIfFailCreateContainerPerformOperationAgain(req, res, containerNameFromReq(req), function (req, res, client, containerName, againCallback) {
         readRequestIntoOsv2(req, res, containerName, fileName, client, readStream, function(err, res) {
             if (err) {
                 againCallback(err);

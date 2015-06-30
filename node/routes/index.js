@@ -34,12 +34,13 @@ router.get('/vol.html', function(req, res) {
 // The form has two inputs: 1-file and 2-text file name that can override the file name
 
 // volume
-router.post('/api/vol/public/form', postPublicFileFromForm);
-router.post('/api/vol/private/form', postPrivateFileFromForm);
+router.post('/api/vol/public/form', postFileFromForm);
+router.post('/api/vol/private/form', function(req, res) {
+  req.medicar = {private: true};
+  postFileFromForm(req, res);
+});
 
-function postPublicFileFromForm(req, res, next) {postFileFromForm(req, res, /*private*/ false);}
-function postPrivateFileFromForm(req, res, next) {postFileFromForm(req, res, /*private*/ true);}
-function postFileFromForm(req, res, privateName) {
+function postFileFromForm(req, res) {
   var busboy = new Busboy({headers: req.headers, limits: {files: 1}});
   var finalFileName; // file name posted, overridden by a field
   busboy.on('field', function (fieldname, val, fieldnameTruncated, valTruncated) {
@@ -53,7 +54,7 @@ function postFileFromForm(req, res, privateName) {
     if (!finalFileName) {
       finalFileName = filename; // if the file name has not been overridden use this one
     }
-    volumeFile.post(req, res, file, finalFileName, privateName, function() {
+    volumeFile.post(req, res, file, finalFileName, function() {
       debug('post finish /form: ' + finalFileName);
       res.render('vol', {title: 'Volume on Disk'});
     });
@@ -62,16 +63,13 @@ function postFileFromForm(req, res, privateName) {
 }
 
 // osv2
-router.post('/api/obj/public/form', postPublicObjFromForm);
-router.post('/api/obj/private/form', postPrivateObjFromForm);
+router.post('/api/obj/public/form', postObjFromForm);
+router.post('/api/obj/private/form', function(req, res) {
+  req.medicar = {private: true};
+  postObjFromForm(req, res);
+});
 
-function postPublicObjFromForm(req, res, next) {
-  postObjFromForm(req, res, /*private*/ false);
-}
-function postPrivateObjFromForm(req, res, next) {
-  postObjFromForm(req, res, /*private*/ true);
-}
-function postObjFromForm(req, res, privateName) {
+function postObjFromForm(req, res) {
   debug('post osv2 /form');
   var busboy = new Busboy({headers: req.headers, limits: {files: 1}});
   var finalFileName; // file name posted, overridden by a field
@@ -90,7 +88,7 @@ function postObjFromForm(req, res, privateName) {
     if (!finalFileName) {
       finalFileName = filename; // if the file name has not been overridden use this one
     }
-    osv2.post(req, res, file, finalFileName, privateName, function(res) {
+    osv2.post(req, res, file, finalFileName, function(res) {
       debug('post finish /form: ' + finalFileName);
       res.render('osv2', {title: 'Object Storage'});
     });
