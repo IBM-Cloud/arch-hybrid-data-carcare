@@ -349,6 +349,7 @@ This is pretty much the same as the Deploy to Staging step as described above.  
 
 This is a IBM hosted version of swift over open stack.
 Using the bluemix gui create the OSV2 service using the "Add Service or API" then choose "Object Storage (v2).
+Once the service has been created, click it to go to the details view. Select the cloud to use (in this case IBM Cloud Public) and click Save.
 The service can be bound to a Bluemix Application (note bluemix suppots Applications, Containers and Virtual Machines).
 See below for more information on containers.
 
