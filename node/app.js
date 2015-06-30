@@ -18,7 +18,6 @@ var volumeFileRoute = require('./routesapi/file').router;
 var osv2 = require('./routesapi/osv2').router;
 var onprem = require('./routesapi/onprem');
 var BasicStrategy = require('passport-http').BasicStrategy;
-var basicAuth = require('basic-auth'); // todo
 var app = express();
 
 var debug = require('debug')('medicar');
