@@ -1,4 +1,4 @@
-FROM registry-ice.ng.bluemix.net/ibmnode:latest
+FROM registry.ng.bluemix.net/ibmnode:latest
 
 # Enable Bluemix Monitoring & Logging
 RUN apt-get update && apt-get -y install apt-transport-https ntp
