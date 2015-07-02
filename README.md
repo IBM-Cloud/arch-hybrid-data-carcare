@@ -279,6 +279,7 @@ The first two properties will be used to setup the route to the app once it is d
 Prior to running this stage of the pipeline, be sure to create the volume storage by running the following command.  It only needs to be run once.
 
   	ice volume create medicarstagingvolume
+
 Save the stage.
 
 ## Load Test
