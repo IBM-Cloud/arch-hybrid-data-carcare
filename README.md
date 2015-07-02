@@ -1,7 +1,7 @@
 # Workload - Hybrid Data Storage
 
 June 2015 MVF defined [Workload Requirements](https://releaseblueprints.ibm.com/display/IDC/Workload+Requirements)
-VM's were not in plan for June so containers were substituted.  Autoscaling was replaced by groups.
+VMs were not in plan for June so containers were substituted.  Autoscaling was replaced by groups.
 
 ## Big Picture
 
@@ -14,22 +14,22 @@ VM's were not in plan for June so containers were substituted.  Autoscaling was 
 
 ## Running Locally
 
-* install node and npm on your computer (note that node is required not nodejs)
-* clone this project
-* cd node
-* npm install
-* npm start
-* the /data directory on your computer will need to be writeable 
-* check out bin/www.js it will indicate what the port# is.  Currently it is http:localhost:80.  You can visit this in a browser.  See the curl examples below.
-* the /api/obj/... object storage requires credential configuration when run locally.  See OSV2 below.
+* Install node and npm on your computer. Note: Node is required not Node.js.
+* Clone this project.
+* `cd node`
+* `npm install`
+* `npm start`
+* The /data directory on your computer will need to be writeable. 
+* Check out bin/www.js it will indicate what the port# is.  Currently it is http:localhost:80.  You can visit this in a browser.  See the curl examples below.
+* The /api/obj/... object storage requires credential configuration when run locally.  See OSV2 below.
 
 ## UI
 
-* **NOTE - additonal configuration for Object Storage (OSV2) and On Premise is required (see below)**.  Volumes work with no additional configuration.
-* Allows upload of a file to Volume on disk, Object Storage,  and On Premise
-* On page load the list of files in Volume on disk, Object Storage and  On Premise are displayed
+* **NOTE: Additonal configuration for Object Storage (OSV2) and On Premise is required (see below)**.  Volumes work with no additional configuration.
+* Allows upload of a file to Volume on disk, Object Storage, and On Premise.
+* On page load, the list of files in Volume on disk, Object Storage and On Premise are displayed.
 
-## test suite
+## Test Suite
 
 The test suite is run with mocha.
 
@@ -37,7 +37,7 @@ The test suite is run with mocha.
     npm test
 
 ## API
-Example curl from swift docs using cygwin.  -T upload a file.  -i include header information in the output. -X request command. -F form.  For a form it must have one file and one optional field whose value is the real storage filename.  A get at the volume will retrieve a list of all the files.
+Example curl from swift docs using cygwin.  `-T` upload a file.  `-i` include header information in the output. `-X` request command. `-F` form.  For a form, it must have one file and one optional field whose value is the real storage filename.  A get at the volume will retrieve a list of all the files.
 
     file=/cygdrive/c/Users/IBM_ADMIN/Downloads/a.txt
     host=localhost
@@ -49,7 +49,7 @@ Example curl from swift docs using cygwin.  -T upload a file.  -i include header
     curl -v -i -F "f=@$file" $host/api/vol/public/form -X POST
     curl -v -i -F "g=b.txt" -F "f=@$file" $host/api/vol/public/form -X POST
 
-Object storage swap the vol -> obj
+Object storage swap `vol` with `obj`.
 
     curl -v -i -T $file $host/api/obj/public/a.txt -X PUT
     curl -v $host/api/obj/public/
@@ -59,12 +59,12 @@ Object storage swap the vol -> obj
     curl -v -i -F "g=b.txt" -F "f=@$file" $host/api/obj/public/form -X POST
     curl -v $host/api/obj/public/a.txt -X DELETE
 
-Similarly it is possible to read from the on premise: chage **vol** to **onprem**
+Similarly it is possible to read from the on premise by changing `vol` to `onprem`.
 
 ## Docker Image
-See [Prerequisites for installing IBM Containers Extension (ICE)](https://www.ng.bluemix.net/docs/starters/container_cli_ov.html#container_prereq)
-This documentation assumes familiarity with docker and ice command line.
-Create and run the docker image using the docker file:
+See [Prerequisites for installing IBM Containers Extension (ICE)](https://www.ng.bluemix.net/docs/starters/container_cli_ov.html#container_prereq).
+This documentation assumes familiarity with Docker and ice command line.
+Create and run the Docker image using the Docker file:
 
     $ docker build -t medicarlocal .
     $ mkdir data && chmod 777 data
@@ -72,15 +72,15 @@ Create and run the docker image using the docker file:
     $ curl -l localhost
 
 This should generate some output.  Use the curl commands from the API above to exercise the API.
-When using the /obj/ for object store be patient, the first time may take a while to establish the connection.
+When using the `/obj/` for object store be patient. The first time may take a while to establish the connection.
 
 ## Bluemix Docker 
-Creating a build pipeline is the easiest way to build, test, and deploy to bluemix.
-But is is possible to manually perform these operations as well.
-Find your bluemix registry name using the bluemix UI.  Be careful it may not match the bluemix "organization".
-At the time of this writing it could be found at the bluemix > create a container > Your Image Registry URL:
-Mine is: registry-ice.ng.bluemix.net/acme.
-The output of ice ip request below was 129.41.232.130
+Creating a build pipeline is the easiest way to build, test, and deploy to Bluemix.
+You can manually perform these operations as well.
+Find your Bluemix registry name using the Bluemix UI.  Be careful; it may not match the Bluemix "organization."
+At the time of this writing, the registry name could be found in Bluemix > create a container > Your Image Registry URL: *URL*.
+Mine is registry-ice.ng.bluemix.net/acme.
+The output of ice IP request below was 129.41.232.130.
 
     ice login ...
     docker tag medicarlocal registry-ice.ng.bluemix.net/acme/medicarlocal
@@ -91,33 +91,33 @@ The output of ice ip request below was 129.41.232.130
     curl 129.41.232.130
 
 This should generate some output.  
-Use the curl commands in the API above using the X in the *ice ip bind* instead of localhost.
+Use the curl commands in the API above using the X in the `ice ip bind` instead of localhost.
 
 
-### Continue with volume:
+### Continue with Volume
 
-If the container is running you will need to stop and remove it.  
-First find the *Container Id* using ice ps.  Mine was 3850564c-7b1c-4596-a005-224a543bece5
+If the container is running, you will need to stop and remove it.  
+First find the *Container Id* using `ice ps`.  Mine was 3850564c-7b1c-4596-a005-224a543bece5
 
     ice ps
     ice stop 3850564c-7b1c-4596-a005-224a543bece5
     ice rm 3850564c-7b1c-4596-a005-224a543bece5
 
-When using docker the volume is a directory on the computer running docker.
-On bluemix this directory is created with the *ice volume* command:
+When using Docker, the volume is a directory on the computer running Docker.
+In Bluemix this directory is created with the `ice volume` command.
 Run a new container mounting the volume created earlier:
 
     ice volume create medicarvolume
     ice run -v medicarvolume:/data -p 80 --name medicarlocal acme/medicarlocal
     ice ip bind 129.41.232.130 medicarlocal
 
-now the curl commands can be used to exercise the *vol* portion of the api and it will be persisted in the volume created:
+Now the curl commands can be used to exercise the `vol` portion of the API and it will be persisted in the volume created:
 
 
     curl -i -T $file $host/api/vol/public/a.txt -X PUT
     curl $host/api/vol/public/
 
-Repeat the steps above to ps, stop, rm, run, ip bind and verify the file is still available:
+Repeat the steps above to `ps`, `stop`, `rm`, `run`, `ip bind` and verify the file is still available:
 
 
     ice ps
@@ -135,57 +135,57 @@ Great, curl is returning a table of contents that indicates the file is present.
     ice route map --hostname medicarlocal --domain mybluemix.net medicarlocal
 
 
-## On Premise repository
+## On Premise Repository
 
-The on premise data store is being accessed through the secure gateway service.
-Using the bluemix UI create the secure gateway service.
+The on premise data store is being accessed through the Secure Gateway service.
+Using the Bluemix UI, create the Secure Gateway service.
 
 * Create the gateway in the service.
-* Create the connection in the gateway.  As you will see below the IP address of the computer that is running the records program locally is 158.85.183.50 and the port will be 8080
+* Create the connection in the gateway.  As you will see below, the IP address of the computer that is running the records program locally is 158.85.183.50 and the port will be 8080.
 
 On premise:
-* Follow the instructions to docker run the secure gateway docker image connecting back to the gateway above.  For me this was: docker run -d ibmcom/secure-gateway-client KhNfR9WOC8l_prod_ng
-* Run the on premise records app.  For me this was:  docker run -d -p 8080:80 registry-ice.ng.bluemix.net/acme/medicarlocal
-* Do an ifconfig and verify that the IP address configured in the gateway, above, is correct.  For me ifconfig displayed the following so I'm good to go
+* Follow the instructions to `docker run` the Secure Gateway Docker image connecting back to the gateway above.  For me this was `docker run -d ibmcom/secure-gateway-client KhNfR9WOC8l_prod_ng`
+* Run the on premise records app.  For me this was `docker run -d -p 8080:80 registry-ice.ng.bluemix.net/acme/medicarlocal`
+* Run the `ifconfig` command and verify that the IP address configured in the gateway above is correct.  For me `ifconfig` displayed the following, so I'm good to go.
 
-    eth1      Link encap:Ethernet  HWaddr 06:9f:f1:b6:50:cc
-              inet addr:158.85.183.50  Bcast:158.85.183.63  Mask:255.255.255.224
+  	eth1      Link encap:Ethernet  HWaddr 06:9f:f1:b6:50:cc
+  	          inet addr:158.85.183.50  Bcast:158.85.183.63  Mask:255.255.255.224
 
-On the computer that is running the secure gateway docker image I verified the following command returned some stuff from the records app.
+On the computer that is running the Secure Gateway Docker image, I verified the following command returned some stuff from the records app.
 
     # curl 158.85.183.50:8080
 
-On any computer on the planet I could verify that the sg connection is working correctly.  In the bluemix ui open the info on the connection (you will find the connection within gateway which is in the secure gateway service).  For me the Cloud Host:Port was cap-sg-prd-2.integration.ibmcloud.com:15188
+On any computer on the planet I could verify that the sg connection is working correctly.  In the Bluemix UI, open the info on the connection (you will find the connection within gateway which is in the Secure Gateway service).  For me the Cloud Host:Port was cap-sg-prd-2.integration.ibmcloud.com:15188
 
     $ curl cap-sg-prd-2.integration.ibmcloud.com:15188
 
 ### Making Secure Gateway secure with TLS
 
-Here are the steps that would be needed to make the Secure Gateway secure:
+Here are the steps needed to make the Secure Gateway secure:
 
-* From Bluemix dashboard, add the Secure Gateway service from the Integration category
-* In Add Service, select Leave unbound  for apps and Standard plan.  Click Create.
-* Click Add Gateway
-* Enter a name for the gateway, e.g. sgtls.  Then click on checkbox for Enforce security token on client.  Then click Connect.
-* Copy the docker command given in the Copy box:  docker run -it ibmcom/secure-gateway-client UtEvxKKGXuk_prod_ng
-* Log into the on-prem server with root or sudo privilege.  Run the docker command in the previous step above.
-* After the docker command is run, on the Secure Gateway dashboard in Bluemix, you should see that the tunnel has been established
+* From Bluemix dashboard, add the Secure Gateway service from the Integration category.
+* In Add Service, select Leave unbound in the App field and select Standard in the Selected Plan field.  Click Create.
+* Click Add Gateway.
+* Enter a name for the gateway, e.g. sgtls.  Click on checkbox for Enforce security token on client, then click Connect.
+* Copy the Docker command given in the Copy box: `docker run -it ibmcom/secure-gateway-client UtEvxKKGXuk_prod_ng`
+* Log into the on-prem server with root or sudo privilege.  Run the Docker command in the previous step above.
+* After the Docker command is run, on the Secure Gateway dashboard in Bluemix, you should see that the tunnel has been established.
 * Click on Add Destinations to connect to the on-prem app (e.g. medical-records app) behind the Secure Gateway Client on the on-prem server.  Fill in the name for the destination, the IP address (or hostname) and port of the on-prem app, and select TLS: Mutual Auth for this destination.
-* Under Advanced section, ensure that the checkbox for Auto generate cert and private key is checked.  For now, we don't configure client-side TLS because we are primarily interested in establishing a secure tunnel between our Bluemix app and the on-prem environment (i.e. the application-side TLS), not the connection between the Secure Gateway Client and the on-prem app.
-* After clicking I'm Done in the previous step, we can download the certificate and key (in a zip file) needed to connect to the on-prem app by clicking on the gear icon and select Download Keys.  Unzipping the certificate file has the following contents:
+* Under the Advanced section, ensure that the checkbox for Auto generate cert and private key is checked.  For now, we don't configure client-side TLS because we are primarily interested in establishing a secure tunnel between our Bluemix app and the on-prem environment (i.e. the application-side TLS), not the connection between the Secure Gateway Client and the on-prem app.
+* After clicking I'm Done in the previous step, we can download the certificate and key (in a zip file) needed to connect to the on-prem app by clicking on the gear icon and selecting Download Keys.  Unzipping the certificate file has the following contents:
 
-	root@devops1:~/khoa/bm-objectstore/certificate# unzip cAMkmBrJozI_X4m_certs.zip
-	Archive:  cAMkmBrJozI_X4m_certs.zip
+  	root@devops1:~/khoa/bm-objectstore/certificate# unzip cAMkmBrJozI_X4m_certs.zip
+  	Archive:  cAMkmBrJozI_X4m_certs.zip
   	inflating: DigiCertTrustedRoot.pem
   	inflating: secureGatewayCert.pem
   	inflating: DigiCertCA2.pem
   	inflating: cAMkmBrJozI_X4m_cert.pem
   	inflating: cAMkmBrJozI_X4m_key.pem
 
-* At this point, we can create a user-provided service that contains the on-prem app's destination and access information, as well as the certificate and key information in a json file.  For example, if the on-prem app is a database, the json file could look something like:
-'{"dbname": "<db name>","dbpw": "<dbpassword>","dbuser": "root","host": "<something.ibmcloud.com>","port": "<port number>","key":"<keyFileContents>", "cert":"<certFileContents>", ...}'
+* At this point, we can create a user-provided service that contains the on-prem app's destination and access information, as well as the certificate and key information in a JSON file.  For example, if the on-prem app is a database, the json file could look something like:
+`{"dbname": "<db name>","dbpw": "<dbpassword>","dbuser": "root","host": "<something.ibmcloud.com>","port": "<port number>","key":"<keyFileContents>", "cert":"<certFileContents>", ...}`
 
-Note that the key and cert information are provided as key value pairs in the json file.  The keyFileContents and certFileContents are stored in the <destination_id>_key.pem and <destination_id>_cert.pem files, respectively.  For example, in our example, here's the contents of the cAMkmBrJozI_X4m_key.pem file:
+Note that the key and cert information are provided as key value pairs in the JSON file.  The keyFileContents and certFileContents are stored in the <destination_id>_key.pem and <destination_id>_cert.pem files, respectively.  In our example, here's the contents of the cAMkmBrJozI_X4m_key.pem file:
 
 	root@devops1:~/khoa/bm-objectstore/certificate# cat cAMkmBrJozI_X4m_key.pem
 	-----BEGIN PRIVATE KEY-----
@@ -217,41 +217,40 @@ Note that the key and cert information are provided as key value pairs in the js
 	xKOhe8y77M5dSwG5YITRBKw=
 	-----END PRIVATE KEY-----
 
-This whole content needs to be copied into the json file.
+The entire contents needs to be copied into the JSON file.
 
-* Run the cf cups command as follows:
-
-	cat <json_file> | xargs cf cups  -p
+* Run the `cf cups` command as follows:
+  	cat <json_file> | xargs cf cups  -p
 
 * Bind the user-provided service to the Bluemix app, so that the app can access the credentials through VCAP_SERVICES.  Once the service is bound to our Bluemix app, the app can access VCAP_SERVICES as follows:
 
-	var VCAP_SERVICES = process.env.VCAP_SERVICES;
-	var userProvided = {};
+  	var VCAP_SERVICES = process.env.VCAP_SERVICES;
+  	var userProvided = {};
 
-	if(VCAP_SERVICES){
+  	if(VCAP_SERVICES){
   		vcap = JSON.parse(VCAP_SERVICES);
   		userProvided = vcap["user-provided"][0].credentials;
   		console.log(vcap);
-	}
+  	}
 
-	var options = {
+  	var options = {
    		host: userProvided.host,
    		port: userProvided.port,
    		key: userProvided.key,
    		cert: userProvided.cert,
    		ca: userProvided.cacert,
    		rejectUnauthorized: true
-	};
+  	};
 
 
 # IDS Pipeline
 
-The IDS pipeline will consist of the follow stages which will be trigger upon pushing any change to the project:
-	1. Integration Tests - runs tests on the NodeJS code
-	2. Build - build the container image
-	3. Deploy to Staging - deploys the container group to the dev space of the organization
-	4. Load Test - runs a JMeter test script to generate a load on the server running in the dev space to test container group scaling and load balancing
-	5. Deploy to Production - deploys the container to the prod space of the organization using Active Deploy
+The IDS pipeline will consist of the following stages, which will be triggered upon pushing any change to the project:
+1. Integration Tests - runs tests on the Node.js code
+2. Build - builds the container image
+3. Deploy to Staging - deploys the container group to the dev space of the organization
+4. Load Test - runs a JMeter test script to generate a load on the server running in the dev space to test container group scaling and load balancing
+5. Deploy to Production - deploys the container to the prod space of the organization using Active Deploy
 
 ## Integration Tests
 
@@ -263,28 +262,29 @@ Add a stage, call it Deploy to Staging, take the defaults, add a Deploy job, set
 
 From there, we need to do the following:
 1. Deploy a container group rather than a single container.
-2. Specify a route so we have a static URL to access our app once deployed
-3. Create and add volume storage to the container
+2. Specify a route so we have a static URL to access our app once deployed.
+3. Create and add volume storage to the container.
 
 In the Deployer script, scroll down until you see the line that calls deploycontainer.sh and comment it out.  This is the script that deploys a single container.  We don't want that.
 
 Scroll down a little further until you see the commented line that would call deploygroup.sh and uncomment it.  This is the script that deploys a container group which is what we want.
 
 The deploygroup.sh script will look for certain environment variables to trigger things such as setting up the route and adding the volume storage.  Go to the Environment Properties tab of the stage and add the following text properties:
-	ROUTE_HOSTNAME = medicar-staging
-	ROUTE_DOMAIN = mybluemix.net
-	OPTIONAL_ARGS = "-v medicarstagingvolume:/data"
+
+  	ROUTE_HOSTNAME = medicar-staging
+  	ROUTE_DOMAIN = mybluemix.net
+  	OPTIONAL_ARGS = "-v medicarstagingvolume:/data"
 The first two properties will be used to setup the route to the app once it is deployed and will result in the app being made available at medicar-staging.mybluemix.net.  The last property will be passed to the ICE command that deploys the container group and will attach the volume storage where files will be persisted across deployments of the app.
 
 Prior to running this stage of the pipeline, be sure to create the volume storage by running the following command.  It only needs to be run once.
-	ice volume create medicarstagingvolume
 
+  	ice volume create medicarstagingvolume
 Save the stage.
 
 ## Load Test
 We'll use JMeter to generate a load on the server to ensure the REST API is working properly.  This will also give us a chance to review the monitoring and logging functionality offered by the Bluemix container service.  By reviewing that, we'll be able to see if container auto-scaling and load balancing is working properly.
 
-The test script we will use is in the project under the tests directory.  You can review it by install JMeter from here: http://jmeter.apache.org and opening the script using JMeter.
+The test script we will use is in the project under the tests directory.  You can review it by installing JMeter from http://jmeter.apache.org and opening the script using JMeter.
 
 Upon reviewing the script, you will see that it exercises each of the REST functions offered by the app; PUT <file>, GET, GET <file>, and DELETE <file> to upload a file, get a file listing, download the contents of a file, and delete a file respectively.  The script does this for each of the storage types offered in this hybrid storage app which are volume storage and object storage.
 
@@ -293,6 +293,7 @@ The script is configured by default to simulate 600 users accessing the app two 
 To run this script in the IDS pipeline, add a stage to the pipeline and name it Load Test.
 
 On the Inputs tab, select the following:
+
 	Input Type = Build Artifacts
 	Stage = Integration Tests
 	Job = Build
@@ -305,7 +306,7 @@ On the Jobs tab, add a Test job and set the Tester Type to Simple.
 
 Also, set the Working Directory to tests since that is where all of the test files live in our project.
 
-Copy the follow script into the Test Command section:
+Copy the following script into the Test Command section:
 	#!/bin/bash
 	echo "Installing JMeter..."
 	sudo apt-get update && sudo apt-get -y install jmeter
@@ -334,10 +335,10 @@ Copy the follow script into the Test Command section:
 After we set a few environment variables, this script will install JMeter, run the script, parse the results, and fail if there are errors.
 
 On the Environment Properties tab, set the following Text Properties.  These will be used by the script we just added to the job:
+
 	test_script = load.jmx
 	results_file = load.jtl
 	log_file = jmeter.log
-
 Save the stage.
 
 ## Deploy to Production
@@ -348,40 +349,39 @@ This is pretty much the same as the Deploy to Staging step as described above.  
 ## Create OSV2 service
 
 This is a IBM hosted version of swift over open stack.
-Using the bluemix gui create the OSV2 service using the "Add Service or API" then choose "Object Storage (v2).
+Using the Bluemix GUI, create the OSV2 service using Add Service or API then choose Object Storage (v2).
 Once the service has been created, click it to go to the details view. Select the cloud to use (in this case IBM Cloud Public) and click Save.
-The service can be bound to a Bluemix Application (note bluemix suppots Applications, Containers and Virtual Machines).
+The service can be bound to a Bluemix Application (Note: Bluemix supports Applications, Containers and Virtual Machines).
 See below for more information on containers.
 
-## Nodejs source code
+## Node.js source code
 
 There are 3 different ways to configure the credential system for the OSV2 in this app.
 See the config.js source code and specifically the two exported variables:
 
-* bluemix binding (see below)
-* module.exports.processEnvVCAP_SERVICES - copy in bound credentials (use in non bluemix environment)
-* module.exports.osv2ServiceCredentials - copy in service credentials (use in non bluemix environment)
+* Bluemix binding (see below)
+* module.exports.processEnvVCAP_SERVICES - copy in bound credentials (use in non Bluemix environment)
+* module.exports.osv2ServiceCredentials - copy in service credentials (use in non Bluemix environment)
 
-As described below the proper way to bind the credentials when running on bluemix is to bind via the VCAP environment variable.
-When working on your desktop this won't be possible but the value of the environment variable can be added to the processEnvVCAP_SERVICES.
-Finally if the VCAP environment variable can not be determined check the service - it may provide the credentials which can be copied into osv2ServiceCredentials
+As described below, the proper way to bind the credentials when running on Bluemix is to bind via the VCAP environment variable.
+When working on your desktop, this won't be possible but the value of the environment variable can be added to the processEnvVCAP_SERVICES.
+Finally, if the VCAP environment variable cannot be determined, check the service -- it may provide the credentials which can be copied into osv2ServiceCredentials.
 The code has examples of the kinds of strings that are expected.
 
 ## Binding OSV2 on Bluemix
 
-It isn't possible to bind a service directly to a container.
-An intermediate Bluemix Cloud Foundry application is required.
-This is described in the container docs,
-at the time of this writing it could be found here [Optional: Binding a service to a container](https://www.ng.bluemix.net/docs/starters/container_ui.html#container_ui)
 
-In the Bluemix gui:
+An intermediate Bluemix Cloud Foundry application is required to bind a service directly to a container.
+This is described in the container docs which,
+at the time of this writing, can be found at [Optional: Binding a service to a container](https://www.ng.bluemix.net/docs/starters/container_ui.html#container_ui).
 
-* create a node.js application, give it the name medicarlocalbind
-* back in the dashboard click the medicarlocalbind app
-* click the "Bind a service or API" and bind the OSV2 service created earlier.
+In the Bluemix GUI:
 
-Back on the command line:
+* Create a Node.js application. Give it the name medicarlocalbind.
+* Back in the dashboard, click the medicarlocalbind app.
+* Click "Bind a service or API" and bind the OSV2 service created earlier.
 
+Back in the command line:
 
     ice ps
     ice stop medicarlocal
@@ -391,8 +391,8 @@ Back on the command line:
     curl $host/api/vol/public/
 
 ## Credential and Session Handling
-To allow access to the private storage areas user credentials must be provided.
-For API these can be provided in the curl commands (or equivalent) via the -u user:password
+To allow access to the private storage areas, user credentials must be provided.
+For API these can be provided in the curl commands (or equivalent) via the `-u` user:password.
 
     curl -u powell:ppw $host/api/vol/private
     curl -v -u powell:ppw -i -T $file $host/api/vol/private/a.txt -X PUT
