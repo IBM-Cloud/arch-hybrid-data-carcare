@@ -87,11 +87,11 @@ function initializeOsv2ReturnClient() {
  */
 module.exports.callbackWithClientOrRespondOnError = function (res, callback) {
     initializeOsv2ReturnClient() // resolve client
-        .then(callback) // callback(client)
         .catch(function (err) {
             console.error('error resolving osv2 client');
             console.error(err);
             res.write('error resolving osv2 client');
             res.status(401).end();
-        });
+        })
+        .then(callback); // callback(client)
 };

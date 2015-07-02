@@ -133,17 +133,21 @@ function getStorageDirCreateIfNeeded(req) {
 function writeFileFromStream(readStream, destinationFilePath, callback) {
     var tmpFile = tmpFilename();
     debug('write to file: ' + tmpFile + ' then rename to: ' + destinationFilePath);
-    readStream.on('end', function () {
+    var writeFileStream = fs.createWriteStream(tmpFile);
+    writeFileStream.on("error", function(err) {
+        throw(err); // not recovering from this
+    });
+    writeFileStream.on('finish', function () {
         fs.rename(tmpFile, destinationFilePath, function (err) {
             debug('rename to: ' + destinationFilePath);
             if (err) {
-                throw(Error(err)); // not recovering from this
+                return callback(err);
             } else {
                 callback();
             }
         });
     });
-    readStream.pipe(fs.createWriteStream(tmpFile));
+    readStream.pipe(writeFileStream);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,8 +158,14 @@ function writeFileFromStream(readStream, destinationFilePath, callback) {
 module.exports.post = function(req, res, readStream, fileName, callback) {
     debug('post file from gui /' + fileName);
     var destinationFileName = getStorageFilenameCreateParentDirIfNeeded(req, fileName);
-    writeFileFromStream(readStream, destinationFileName, function () {
-        callback && callback(res);
+    writeFileFromStream(readStream, destinationFileName, function (err) {
+        if (callback) {
+            if (err) {
+                callback(err)
+            } else {
+                callback(false);
+            }
+        }
     });
 };
 
@@ -167,8 +177,12 @@ router.put('/:file', function (req, res) {
     var fileName = req.params.file;
     debug('put /' + fileName);
     var destinationFilePath = storageFilename(req, fileName);
-    writeFileFromStream(req, destinationFilePath, function() {
-        res.end();
+    writeFileFromStream(req, destinationFilePath, function(err) {
+        if (err) {
+            res.status(404).json(err).end();
+        } else {
+            res.end();
+        }
     });
 });
 
@@ -198,16 +212,24 @@ router.get('/:file', function getFile(req, res) {
     var filePath = storageFilename(req, fileName);
     fs.stat(filePath, function (err, stat) {
         if (err) {
-            res.status(404).json(err).end();
-            return;
+            return res.status(404).json(err).end();
         }
-        res.writeHead(200, {
-            'Content-Type': 'text/plain',
-            'Content-Length': stat.size
-        });
+        fs.open(filePath, 'r', function(err, fd) {
+            if (err) {
+                return res.status(404).json(err).end();
+            }
+            res.writeHead(200, {
+                'Content-Type': 'text/plain',
+                'Content-Length': stat.size
+            });
 
-        var readStream = fs.createReadStream(filePath);
-        readStream.pipe(res);
+            var readStream = fs.createReadStream(null, {fd: fd});
+            readStream.on('error', function(err) {
+                console.error(err);
+                return res.status(404).json(err).end();
+            });
+            readStream.pipe(res);
+        });
     });
 });
 

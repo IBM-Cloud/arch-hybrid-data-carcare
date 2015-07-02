@@ -94,10 +94,10 @@ function waitForContactThenPushSessionAndPassport(req, res, next) {
 
 // Passport login configuration
     passport.serializeUser(function (user, done) {
-        done(null, user);
+        done(null, user.id);
     });
     passport.deserializeUser(function (obj, done) {
-        done(null, obj);
+        done(null, {id: obj});
     });
 
     var users = {root: {password: 'rpw', id:'0'}, powell: {password: 'ppw', id:'1'}};

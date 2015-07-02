@@ -54,7 +54,11 @@ function postFileFromForm(req, res) {
     if (!finalFileName) {
       finalFileName = filename; // if the file name has not been overridden use this one
     }
-    volumeFile.post(req, res, file, finalFileName, function() {
+    volumeFile.post(req, res, file, finalFileName, function(err) {
+      if (err) {
+        console.error(err);
+        return res.status(404).json(err).end();
+      }
       debug('post finish /form: ' + finalFileName);
       res.render('vol', {title: 'Volume on Disk'});
     });
@@ -88,7 +92,7 @@ function postObjFromForm(req, res) {
     if (!finalFileName) {
       finalFileName = filename; // if the file name has not been overridden use this one
     }
-    osv2.post(req, res, file, finalFileName, function(res) {
+    osv2.post(req, res, file, finalFileName, function() {
       debug('post finish /form: ' + finalFileName);
       res.render('osv2', {title: 'Object Storage'});
     });
