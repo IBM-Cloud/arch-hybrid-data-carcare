@@ -30,7 +30,7 @@ function readRequestIntoOsv2(req, res, containerName, fileName, client, inputStr
     debug('osv2 upload options: ' + JSON.stringify(options));
     var writeStream = client.upload(options);
     writeStream.on('error', function(err) {
-        writeResCallback(err)
+        writeResCallback(err, res);
     });
     writeStream.on('success', function() {
        writeResCallback(false, res);
@@ -38,8 +38,16 @@ function readRequestIntoOsv2(req, res, containerName, fileName, client, inputStr
     inputStream.pipe(writeStream);
 }
 
-// Perform the operation.  If the operation fails because the container does not exist
-// then create the container and then perform the operation again.
+// examine the req and the error code returned from the object storge
+// command and return true if it is likely that the container does not exist
+function maybeContainerDoesNotExist(req, err) {
+    return (err.failCode && err.failCode === 'Item not found');
+}
+
+// Connect to the osv2 service singleton to get the client.
+// Call the provided operation with the client and providing a callback to perform the operation again if desired.
+// If the callback requests and the error looks like it may be happening because the container does not exist create the container
+// and call the operation again.
 // Send the error response on error.  If the operation is successful then the operation should send the
 // response
 function performOperationIfFailCreateContainerPerformOperationAgain(req, res, containerName, operation) {
@@ -48,21 +56,23 @@ function performOperationIfFailCreateContainerPerformOperationAgain(req, res, co
         debug('authentic client region: ' + client.region);
         operation(req, res, client, containerName, function (err) {
             if (err) {
-                if (err.failCode === 'Item not found') {
+                if (maybeContainerDoesNotExist(req, err)) {
                     debug('creating container: ' + containerName);
                     client.createContainer({name: containerName}, function (err, createdContainer) {
                         if (err) {
                             console.error('osv2 create container failed for: ' + containerName);
-                            res.status(500).json(err);
+                            res.status(500).json(err).end();
                         } else {
                             debug('created container: ' + JSON.stringify(createdContainer));
                             operation(req, res, client, containerName, function (err) {
                                 if (err) {
-                                    res.status(500).json(err);
+                                    res.status(404).json(err).end();
                                 }
                             });
                         }
                     });
+                } else {
+                    res.status(500).json(err);
                 }
             }
         });
@@ -75,7 +85,7 @@ module.exports.post = function(req, res, readStream, fileName, callback) {
     performOperationIfFailCreateContainerPerformOperationAgain(req, res, containerNameFromReq(req), function (req, res, client, containerName, againCallback) {
         readRequestIntoOsv2(req, res, containerName, fileName, client, readStream, function(err, res) {
             if (err) {
-                againCallback(err);
+                res.status(404).json(err).end();
             } else {
                 callback && callback(res);
             }
@@ -91,7 +101,7 @@ router.put('/:file', function(req, res) {
     performOperationIfFailCreateContainerPerformOperationAgain(req, res, containerNameFromReq(req), function (req, res, client, containerName, againCallback) {
         readRequestIntoOsv2(req, res, containerName, fileName, client, req, function(err, res) {
             if (err) {
-                againCallback(err);
+                res.status(404).json(err).end();
             } else {
                 res.status(200).end();
             }
@@ -114,7 +124,7 @@ router.get('/:file', function (req, res) {
         debug('osv2 download options: ' + JSON.stringify(options));
         client.download(options, function (err) {
             if (err) {
-                againCallback(err);
+               // res.status(404).json(err).end();
             }
         }).pipe(res);
     });
@@ -144,7 +154,7 @@ router.delete('/', function (req, res) {
         client.destroyContainer(container, function (err) {
             if (err) {
                 console.error('osv2 destroy container failed:' + container);
-                res.status(500).json(err);
+                res.status(404).json(err).end();
             } else {
                 debug('osv2 container destroyed: ' + container);
                 res.end();
@@ -162,7 +172,7 @@ router.delete('/:file', function (req, res) {
         debug('removeFile ' + containerName + '/' + fileName);
         client.removeFile(containerName, fileName, function (err) {
             if (err) {
-                callback(err);
+                res.status(404).json(err).end();
             } else {
                 res.status(200).end();
             }

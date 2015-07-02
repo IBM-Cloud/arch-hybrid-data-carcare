@@ -396,9 +396,77 @@ For API these can be provided in the curl commands (or equivalent) via the -u us
     curl -u powell:ppw $host/api/vol/private
     curl -v -u powell:ppw -i -T $file $host/api/vol/private/a.txt -X PUT
     curl -v -u powell:ppw $host/api/vol/private/
-
     curl -v -u powell:ppw $host/api/vol/private/a.txt -X GET
     curl -v -u powell:ppw -i -F "f=@$file" $host/api/vol/private/form -X POST
     curl -v -u powell:ppw -i -F "g=b.txt" -F "f=@$file" $host/api/vol/private/form -X POST
     curl -v -u powell:ppw $host/api/vol/private/a.txt -X DELETE
 
+
+## Passport
+
+[Passport](http://passportjs.org/docs) is an authentication middleware for node.
+The first two passport strategies were local and http basic.
+The following building blocks are used:
+
+An authentication middleware function is created for each of these:
+
+    passport.authenticate('local',...)
+    passport.authenticate('basic', ...)
+
+The strings local and basic are part of the two registered passport strategies:
+
+    var passportLocal = require('passport-local');
+    var BasicStrategy = require('passport-http').BasicStrategy;
+
+They are configured and bound to passport using:
+
+    passport.use(new passportLocal(getIdForUserPassword));
+    passport.use(new BasicStrategy({}, getIdForUserPassword));
+
+More specifically the local strategy is bound to a post request which is sent by the login page:
+
+    app.post('/login', passport.authenticate('local', {successRedirect: '/', failureRedirect: '/login'}));
+
+This causes a function to be called with the 
+username and password attributes in the body of the request
+provided by the html <form> element.
+In our case the function:
+
+    function getIdForUserPassword(username, password, done) {...}
+
+is called and if the credentials are good an object is returned that will become the req.user object:
+
+    return done(null, {
+        id: user.id
+    });
+
+This object is associated with the session and serialized.
+Serialization can create a smaller key representing a large amount of user data.
+Subsequent http requests will deserialize and allow the inflation of the user data based on the serialized key.
+The deserialized data will be available in req.user
+
+Each future http request for the same session will deserialized the user.
+In our case no external storage is required but for demonstrational purposes a object {id: "value"} represents the users
+and is reduced (serialized) to just "value" and then inflated (deserialized) to {id: "value"}
+
+    passport.serializeUser(function (user, done) {
+        done(null, user.id);
+    });
+    passport.deserializeUser(function (obj, done) {
+        done(null, {id: obj});
+    });
+
+
+## Jmeter locally
+jmeter testing can be run locally.
+On Windows I did the following:
+
+
+
+    # install jmeter 
+    cd medicar\tests
+	set test_inputs=inputs
+	set test_script=load.jmx
+	set results_file=load.jtl
+	set log_file=jmeter.log
+    C:\powell\jmeter\apache-jmeter-2.13\bin\jmeter -n -Jjmeter.save.saveservice.output_format=csv -JtestInputs=%test_inputs% -t %test_script% -l %results_file% -j %log_file% -Jserver=localhost

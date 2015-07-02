@@ -98,6 +98,9 @@ function requestServiceCredentialsFromVcapCredentials() {
 
     return new Promise(function (resolve, reject) {
         request(req_options, function (error, res, body) {
+            if (error) {
+                return reject(error);
+            }
             if (res.statusCode == 200) {
                 return resolve(JSON.parse(res.body).CloudIntegration);
             } else {
