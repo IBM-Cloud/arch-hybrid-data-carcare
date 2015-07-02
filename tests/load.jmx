@@ -9,7 +9,7 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="users" elementType="Argument">
             <stringProp name="Argument.name">users</stringProp>
-            <stringProp name="Argument.value">${__P(users,600)}</stringProp>
+            <stringProp name="Argument.value">${__P(users,60)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="rampup" elementType="Argument">
@@ -72,8 +72,8 @@
             <stringProp name="55126294">timestamp</stringProp>
           </collectionProp>
           <collectionProp name="UserParameters.thread_values">
-            <collectionProp name="653167801">
-              <stringProp name="-1574338746">${__javaScript(new Date().getTime();)}</stringProp>
+            <collectionProp name="1711310736">
+              <stringProp name="1711310705">${__javaScript(new Date().getTime() + Math.random();)}</stringProp>
             </collectionProp>
           </collectionProp>
           <boolProp name="UserParameters.per_iteration">true</boolProp>
@@ -247,8 +247,8 @@
             <stringProp name="55126294">timestamp</stringProp>
           </collectionProp>
           <collectionProp name="UserParameters.thread_values">
-            <collectionProp name="653167801">
-              <stringProp name="-1574338746">${__javaScript(new Date().getTime();)}</stringProp>
+            <collectionProp name="1711310736">
+              <stringProp name="1711310705">${__javaScript(new Date().getTime() + Math.random();)}</stringProp>
             </collectionProp>
           </collectionProp>
           <boolProp name="UserParameters.per_iteration">true</boolProp>
