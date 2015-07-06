@@ -1,8 +1,5 @@
 # Workload - Hybrid Data Storage
 
-June 2015 MVF defined [Workload Requirements](https://releaseblueprints.ibm.com/display/IDC/Workload+Requirements)
-VMs were not in plan for June so containers were substituted.  Autoscaling was replaced by groups.
-
 ## Big Picture
 
 [Block Diagram](diagram.png)
