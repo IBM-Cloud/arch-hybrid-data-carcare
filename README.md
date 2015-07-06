@@ -63,12 +63,12 @@ Similarly it is possible to read from the on premise by changing `vol` to `onpre
 
 ## Docker Image
 See [Prerequisites for installing IBM Containers Extension (ICE)](https://www.ng.bluemix.net/docs/starters/container_cli_ov.html#container_prereq).
-This documentation assumes familiarity with Docker and ice command line.
+This documentation assumes familiarity with Docker and cf ic command line.
 Create and run the Docker image using the Docker file:
 
     $ docker build -t medicarlocal .
     $ mkdir data && chmod 777 data
-    $ docker run -d -p 80:80 -v $( pwd )/data:/data medicarlocal
+    $ docker run -d -p 80:80 -v $( pwd )/data:/data --name medicarlocal medicarlocal
     $ curl -l localhost
 
 This should generate some output.  Use the curl commands from the API above to exercise the API.
@@ -79,37 +79,38 @@ Creating a build pipeline is the easiest way to build, test, and deploy to Bluem
 You can manually perform these operations as well.
 Find your Bluemix registry name using the Bluemix UI.  Be careful; it may not match the Bluemix "organization."
 At the time of this writing, the registry name could be found in Bluemix > create a container > Your Image Registry URL: *URL*.
-Mine is registry-ice.ng.bluemix.net/acme.
-The output of ice IP request below was 129.41.232.130.
+Mine is registry.ng.bluemix.net/acme.
+The output of cf ic IP request below was 129.41.232.130.
 
-    ice login ...
-    docker tag medicarlocal registry-ice.ng.bluemix.net/acme/medicarlocal
-    docker push registry-ice.ng.bluemix.net/acme/medicarlocal
-    ice run -p 80 --name medicarlocal acme/medicarlocal
-    ice ip request
-    ice ip bind 129.41.232.130 medicarlocal
+    cf ic login ...
+    docker tag medicarlocal registry.ng.bluemix.net/acme/medicarlocal
+    docker push registry.ng.bluemix.net/acme/medicarlocal
+    host=134.168.4.106
+    cf ic run -p 80:80 --name medicarlocal registry.ng.bluemix.net/acme/medicarlocal
+    cf ic ip request
+    cf ic ip bind 129.41.232.130 medicarlocal
+    curl -v -i -T $file $host/api/vol/public/a.txt -X PUT
     curl 129.41.232.130
 
 This should generate some output.  
-Use the curl commands in the API above using the X in the `ice ip bind` instead of localhost.
+Use the curl commands in the API above using the X in the `cf ic ip bind` instead of localhost.
 
 
 ### Continue with Volume
 
 If the container is running, you will need to stop and remove it.  
-First find the *Container Id* using `ice ps`.  Mine was 3850564c-7b1c-4596-a005-224a543bece5
 
-    ice ps
-    ice stop 3850564c-7b1c-4596-a005-224a543bece5
-    ice rm 3850564c-7b1c-4596-a005-224a543bece5
+    cf ic ps
+    cf ic stop medicarlocal
+    cf ic rm medicarlocal
 
 When using Docker, the volume is a directory on the computer running Docker.
-In Bluemix this directory is created with the `ice volume` command.
+In Bluemix this directory is created with the `cf ic volume` command.
 Run a new container mounting the volume created earlier:
 
-    ice volume create medicarvolume
-    ice run -v medicarvolume:/data -p 80 --name medicarlocal acme/medicarlocal
-    ice ip bind 129.41.232.130 medicarlocal
+    cf ic volume create medicarvolume
+    cf ic run -v medicarvolume:/data -p 80 --name medicarlocal registry.ng.bluemix.net/acme/medicarlocal
+    cf ic ip bind 129.41.232.130 medicarlocal
 
 Now the curl commands can be used to exercise the `vol` portion of the API and it will be persisted in the volume created:
 
@@ -120,19 +121,19 @@ Now the curl commands can be used to exercise the `vol` portion of the API and i
 Repeat the steps above to `ps`, `stop`, `rm`, `run`, `ip bind` and verify the file is still available:
 
 
-    ice ps
-    ice stop 3850564c-7b1c-4596-a005-224a543bece5
-    ice rm 3850564c-7b1c-4596-a005-224a543bece5
-    ice run -v medicarvolume:/data -p 80 --name medicarlocal acme/medicarlocal
-    ice ip bind 129.41.232.130 medicarlocal
+    cf ic ps
+    cf ic stop medicarlocal
+    cf ic rm medicarlocal
+    cf ic run -v medicarvolume:/data -p 80 --name medicarlocal registry.ng.bluemix.net/acme/medicarlocal
+    cf ic ip bind 129.41.232.130 medicarlocal
     curl $host/api/vol/public/
 
 Great, curl is returning a table of contents that indicates the file is present.
 
 ## Container Groups
 
-    ice group create -v medicarvolume:/data -p 80 --name medicarlocal acme/medicarlocal
-    ice route map --hostname medicarlocal --domain mybluemix.net medicarlocal
+    cf ic group create -v medicarvolume:/data -p 80 --bind medicarlocalbind --name medicarlocal registry.ng.bluemix.net/acme/medicarlocal
+    cf ic route map --hostname medicarlocal --domain mybluemix.net medicarlocal
 
 
 ## On Premise Repository
@@ -145,7 +146,7 @@ Using the Bluemix UI, create the Secure Gateway service.
 
 On premise:
 * Follow the instructions to `docker run` the Secure Gateway Docker image connecting back to the gateway above.  For me this was `docker run -d ibmcom/secure-gateway-client KhNfR9WOC8l_prod_ng`
-* Run the on premise records app.  For me this was `docker run -d -p 8080:80 registry-ice.ng.bluemix.net/acme/medicarlocal`
+* Run the on premise records app.  For me this was `docker run -d -p 8080:80 registry.ng.bluemix.net/acme/medicarlocal`
 * Run the `ifconfig` command and verify that the IP address configured in the gateway above is correct.  For me `ifconfig` displayed the following, so I'm good to go.
 
   	eth1      Link encap:Ethernet  HWaddr 06:9f:f1:b6:50:cc
@@ -278,7 +279,7 @@ The first two properties will be used to setup the route to the app once it is d
 
 Prior to running this stage of the pipeline, be sure to create the volume storage by running the following command.  It only needs to be run once.
 
-  	ice volume create medicarstagingvolume
+  	cf ic volume create medicarstagingvolume
 
 Save the stage.
 
@@ -384,11 +385,11 @@ In the Bluemix GUI:
 
 Back in the command line:
 
-    ice ps
-    ice stop medicarlocal
-    ice rm medicarlocal
-    ice run -v medicarvolume:/data -p 80 --name medicarlocal --bind medicarlocalbind -e 'DEBUG=medicar' acme/medicarlocal
-    ice ip bind 129.41.232.130 medicarlocal
+    cf ic ps
+    cf ic stop medicarlocal
+    cf ic rm medicarlocal
+    cf ic run -v medicarvolume:/data -p 80 --name medicarlocal --bind medicarlocalbind registry.ng.bluemix.net/acme/medicarlocal
+    cf ic ip bind 129.41.232.130 medicarlocal
     curl $host/api/vol/public/
 
 ## Credential and Session Handling
@@ -463,12 +464,18 @@ and is reduced (serialized) to just "value" and then inflated (deserialized) to 
 jmeter testing can be run locally.
 On Windows I did the following:
 
-
-
     # install jmeter 
     cd medicar\tests
 	set test_inputs=inputs
 	set test_script=load.jmx
 	set results_file=load.jtl
 	set log_file=jmeter.log
+    C:\powell\jmeter\apache-jmeter-2.13\bin\jmeter -- this is where jmeter was intalled, run the gui and navigate to the test_inputs directory
     C:\powell\jmeter\apache-jmeter-2.13\bin\jmeter -n -Jjmeter.save.saveservice.output_format=csv -JtestInputs=%test_inputs% -t %test_script% -l %results_file% -j %log_file% -Jserver=localhost
+
+## what
+One time cf login asked me for API> and the answer was api.ng.bluemix.net
+
+cf login -a api.ng.bluemix.net
+
+node version: v0.10.32

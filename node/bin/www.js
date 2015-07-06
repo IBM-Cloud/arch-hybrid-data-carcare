@@ -1,15 +1,14 @@
 #!/usr/bin/env node
-console.log('medicar says 1 hello');
-console.log('ENV: ');
-console.dir(process.env);
+console.log('medicar says hello.  setenv DEBUG=medicar to get a lot more log.  If DEBUG=medicar the next line should be: medicar debugging on');
 
 /**
  * Module dependencies.
  */
 
 var debug = require('debug')('medicar');
-console.log('debug enabled');
-debug('debug :server says hello');
+debug('debugging on');
+debug('ENV: ');
+debug(process.env);
 var http = require('http');
 var port;
 var bind;

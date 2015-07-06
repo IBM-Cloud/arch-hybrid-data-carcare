@@ -53,7 +53,7 @@ module.exports.init = function (serviceCredentialString, vcapServicesString) {
         debug('osv2 credentials, will use hard coded service credentials');
         serviceCredentials = JSON.parse(serviceCredentialString).CloudIntegration;
     } else if (vcapServicesString) {
-        debug('osv2 credentials, will use hard coded vcap credentials');
+        debug('osv2 credentials, hard coded VCAP_SERVICES are available and will be used if not provided');
         serviceProviderCredentials = serviceProviderCredentialParser(vcapServicesString);
     }
 };
