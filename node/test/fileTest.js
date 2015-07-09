@@ -159,4 +159,48 @@ describe('private filesystem testing', function () {
             });
     });
     fileTestUrl('/api/vol/private');
+    it('get /logout when logged in', function (done) {
+        areq.get('/logout')
+            .expect(302)    // redirect to /
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('get /api/vol/private should fail', function (done) {
+        areq.get('/api/vol/private')
+            .expect(401) // not logged in
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('get /api/vol/private with basic authentication', function (done) {
+        auth = "Basic " + new Buffer('powell' + ":" + 'ppw').toString("base64");
+        areq.get('/api/vol/private')
+            .expect(200)
+            .set('Authorization', auth)
+            .expect('[]')
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('get /api/vol/private after basic creds should fail the creds are not persisted in the session', function (done) {
+        areq.get('/api/vol/private')
+            .expect(401) // not logged in
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
+    it('get /api/vol/private with basic authentication wit bad creds should fail', function (done) {
+        auth = "Basic " + new Buffer('x' + ":" + 'x').toString("base64");
+        areq.get('/api/vol/private')
+            .expect(401) // not logged in
+            .end(function (err, res) {
+                if (err) return done(err);
+                done();
+            });
+    });
 });

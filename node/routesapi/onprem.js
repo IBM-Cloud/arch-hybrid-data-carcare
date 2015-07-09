@@ -49,14 +49,9 @@ router.all('*', function (req, res) {
     onpremReqOption.headers = onpremReqHeaders;
 
     var onpremiseReq = http.request(onpremReqOption, function(onpremRes) {
-        console.log('got response');
-
         res.set(createResHeaders(onpremRes));
         res.status(onpremRes.statusCode);
         onpremRes.pipe(res);
-        onpremRes.on('end', function () {
-            console.log('response done');
-        })
     });
 
     req.pipe(onpremiseReq);

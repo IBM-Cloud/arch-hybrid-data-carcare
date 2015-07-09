@@ -385,7 +385,7 @@ Back in the command line:
     cf ic ps
     cf ic stop medicarlocal
     cf ic rm medicarlocal
-    cf ic run -v medicarvolume:/data -p 80 --name medicarlocal --bind medicarlocalbind registry.ng.bluemix.net/acme/medicarlocal
+    cf ic run -v medicarvolume:/data -p 80 --name medicarlocal -e CCS_BIND_APP=medicarlocalbind registry.ng.bluemix.net/acme/medicarlocal
     cf ic ip bind 129.41.232.130 medicarlocal
     curl $host/api/vol/public/
 
@@ -457,6 +457,62 @@ and is reduced (serialized) to just "value" and then inflated (deserialized) to 
     });
 
 
+## passport-google
+See [google guick-start app for Node.js](https://developers.google.com/identity/toolkit/web/quickstart/nodejs)
+
+For the service account the password for the private key is notasecret
+
+
+Using [passport-google](https://github.com/jaredhanson/passport-google) is not longer supported.  The end result was [OpenID 2.0 for Google Accounts has gone away](https://support.google.com/accounts/answer/6206245?p=openid&rd=1)
+
+## single sign on SSO bluemix service
+The goal is to have a service available to the medicar container.
+It is currently required to have a "binding" or "bridge" Cloud Foundation Application to get at the services when using Containers or Container Groups.
+See 
+
+* Create a cf app to bind to the service: medicarbridge
+  * What kind of app: WEB
+  * what kind do you want to start with: SDK for Node.js
+  * do not add a service or api - this will be done later
+* Back in the dashboard create a service
+  * App: leave unbound
+  * Service name: medicarsso
+* Back in the dashboard select the medicarsso service
+  * configure and deply - provide a name: medicarsso
+  * give name: Cloud Directory - 
+  * Add user admin, admin.password, Admin, Istrator
+  * Add user powell, ppw, Powell, Rock  - if you want to run the unit tests
+  * email: blank
+* Back in the dashboard Bind services to medicarbridge
+  * Open medicarbridge
+  * Select Overview to Bind a Service or API - medicarsso
+* Back in the dashboard Integrate the medicarsso service
+  * Open medicarbridge - must open the app first, Choose INTEGRATE in the upper right:
+  * The Return-To-URL needs to be associated with the real app, not the bridge app.  For me it was: https://medicar-staging.mybluemix.net/auth/sso/callback
+  * The display name should also be associated with the real app
+  * Download the required file for the Node.js app, the file is passport-idaas-openidconnect.zip and I unzipped it into the lib/ directory
+
+
+
+Note that in order to debug on my local computer I added the following line to my /etc/hosts file (windows c:\WINDOWS\system32\drivers\etc\hosts) 
+
+    127.0.0.1       medicar-staging.mybluemix.net
+
+
+* Facebook
+  * Check out [](https://developers.facebook.com/docs/facebook-login/login-flow-for-web/v2.4)
+  * Create the Web "medicar" app, Category "Business", likely does not matter
+  * Save away the client id and secret these will be required to configure the passport facebook strategy
+  * Determine the hostname and the callback path in the app.  A good place to start is http://localhost/auth/facebook/callback.
+  localhost will need to be adjusted to the name of the final app in bluemix.
+
+        var facebookCallbackPath = '/auth/facebook/callback';
+        passport.use(new FacebookStrategy({
+            clientID: facebookConf.clientID,
+            clientSecret: facebookConf.clientSecret,
+            callbackURL: hostname + facebookCallbackPath,
+
+
 ## Jmeter locally
 jmeter testing can be run locally.
 On Windows I did the following:
@@ -476,3 +532,61 @@ One time cf login asked me for API> and the answer was api.ng.bluemix.net
 cf login -a api.ng.bluemix.net
 
 node version: v0.10.32
+
+google 
+
+
+## summary of services
+
+mongo data base is required.  In the VCAP_SERVICES it must have an *name* of *medicarmongo*.  Here is an example:
+
+    "VCAP_SERVICES": {
+        "mongolab": [
+          {
+          "name": "medicarmongo",
+          "label": "mongolab",
+          "plan": "sandbox",
+          "credentials": {
+            "uri": "mongodb://IbmCloud_vugkd6vn_bsi06h9f_l0ro0s1e:NuN0Fwi-5zLqXptHUyefjwWvEWAwMo_D@ds055110.mongolab.com:55110/IbmCloud_vugkd6vn_bsi06h9f"
+          }
+        }
+
+Single Sign On.  In the VCAP_SERVICES it must have a *name* of *medicarsso*
+
+    "VCAP_SERVICES": {
+      "SingleSignOn": [
+        {
+          "name": "medicarsso",
+          "label": "SingleSignOn",
+          "plan": "standard",
+          "credentials": {
+            "secret": "izMN9P3pJw",
+            "tokenEndpointUrl": "https://medicarsso-r12998984j-ctw5.iam.ibmcloud.com/idaas/oidc/endpoint/default/token",
+            "authorizationEndpointUrl": "https://medicarsso-r12998984j-ctw5.iam.ibmcloud.com/idaas/oidc/endpoint/default/authorize",
+            "issuerIdentifier": "medicarsso-r12998984j-ctw5.iam.ibmcloud.com",
+            "clientId": "JE9JE3rNPd",
+            "serverSupportedScope": [
+              "openid"
+            ]
+          }
+        }   
+
+
+Object Storage Version 2.  In the VCAP_SERVICES, the 0 entry should be:
+
+    "VCAP_SERVICES": {
+       "Object Storage": [
+         {
+           "name": "osv2-pquiring",
+           "label": "Object Storage",
+           "plan": "Free",
+           "credentials":
+             {
+               "auth_url": "https://objectstorage.ng.bluemix.net/auth/8259e199-3520-4de6-9180-411aa1788095/2ad3fe49-83e6-492a-836c-bf958318fc0f",
+               "username": "80ce884743da644807120849ca2938bd380c3374",
+               "password": "52bea2ee6fd6666a06dd230ef4fa4c7e7eec0b9f4b144b4cc27a715cf38f"
+             }
+          }
+        ]
+    }';
+

@@ -1,0 +1,36 @@
+{
+  "facebook": {
+    "clientID": "1416497942014095",
+    "clientSecret": "d4b1e22e4cbb3cae5bd469cf1081adcb"
+  },
+  "VCAP_SERVICES": {
+      "mongolab": [
+      {
+        "name": "medicarmongo",
+        "label": "mongolab",
+        "plan": "sandbox",
+        "credentials": {
+          "uri": "mongodb://IbmCloud_vugkd6vn_bsi06h9f_l0ro0s1e:NuN0Fwi-5zLqXptHUyefjwWvEWAwMo_D@ds055110.mongolab.com:55110/IbmCloud_vugkd6vn_bsi06h9f"
+        }
+      }
+
+    ],
+    "SingleSignOn": [
+      {
+        "name": "medicarsso",
+        "label": "SingleSignOn",
+        "plan": "standard",
+        "credentials": {
+          "secret": "izMN9P3pJw",
+          "tokenEndpointUrl": "https://medicarsso-r12998984j-ctw5.iam.ibmcloud.com/idaas/oidc/endpoint/default/token",
+          "authorizationEndpointUrl": "https://medicarsso-r12998984j-ctw5.iam.ibmcloud.com/idaas/oidc/endpoint/default/authorize",
+          "issuerIdentifier": "medicarsso-r12998984j-ctw5.iam.ibmcloud.com",
+          "clientId": "JE9JE3rNPd",
+          "serverSupportedScope": [
+            "openid"
+          ]
+        }
+      }
+    ]
+  }
+}

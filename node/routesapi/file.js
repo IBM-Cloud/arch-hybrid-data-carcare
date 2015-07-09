@@ -118,7 +118,7 @@ function privateReq(req) {
 // get the public or a user specific private directory
 function getStorageDirCreateIfNeeded(req) {
     if (privateReq(req)) {
-        var privateDirectory = path.join(privateDir, req.user.id);  // this should be safe since middleware has verified this
+        var privateDirectory = path.join(privateDir, saneFilename(req.user.id));
         if (!fs.existsSync(privateDirectory)) {
             fs.mkdirSync(privateDirectory);
         }
