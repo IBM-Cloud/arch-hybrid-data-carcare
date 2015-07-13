@@ -1,2 +1,2 @@
-node_modules
-tmpdata
+/node_modules/
+/tmpdata/
