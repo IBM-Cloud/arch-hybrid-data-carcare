@@ -6,10 +6,9 @@
 
 
 * [bluemix cfsworkloads](https://console.ng.bluemix.net/?direct=classic#/resources/orgGuid=b163c0f6-6d12-419b-b3d3-0c105e2294c7&spaceGuid=e2e09bbf-ff0e-488e-b19a-200565d173b6)
-* [source code](https://hub.jazz.net/project/referenceapps/workloads)
+* [License](LICENSE)
 
 
-[License](LICENSE)
 
 ## Running Locally
 
