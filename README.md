@@ -9,6 +9,8 @@
 * [source code](https://hub.jazz.net/project/referenceapps/workloads)
 
 
+[License](LICENSE)
+
 ## Running Locally
 
 * Install node and npm on your computer. Note: Node is required not Node.js.
