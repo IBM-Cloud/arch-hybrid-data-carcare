@@ -1,68 +1,29 @@
 #!/usr/bin/env node
-console.log('medicar says hello.  setenv DEBUG=medicar to get a lot more log.  If DEBUG=medicar the next line should be: medicar debugging on');
-
-/**
- * Module dependencies.
- */
-
+console.log('node version: ' + process.version);
+console.log('medicar says hello.  setenv DEBUG=medicar to get a lot more log.  If DEBUG=medicar the next line should read: medicar debugging on');
 var debug = require('debug')('medicar');
 debug('debugging on');
+
 debug('ENV: ');
 debug(process.env);
 var http = require('http');
-var port;
-var bind;
-
-// cloud foundry initialization
-if (runningInCloudFoundry()) {
-    var cfenv = require('cfenv');
-    // get the app environment from Cloud Foundry
-    var appEnv = cfenv.getAppEnv();
-    console.log(appEnv);
-    port = appEnv.port;
-    bind = appEnv.bind;
-    if (!process.env['MR_DATADIR']) {
-        process.env['MR_DATADIR'] = './data'; // set the default to a local directory instead of /data
-    }
-}
-
-/**
- * Get port from environment and store in Express.
- */
-
-console.log('node version: ' + process.version);
-port = port || normalizePort(process.env.PORT || '80');
+var config = require('../config');
 
 var app = require('../app');
+var port = config.nconf.get('CAR_PORT');
+var port = normalizePort(port);
 app.set('port', port);
 
-/**
- * Create HTTP server.
- */
-
 var server = http.createServer(app);
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-if (bind) {
-    server.listen(port, bind);
+var hostname = config.nconf.get('CAR_HOSTNAME');
+if (hostname) {
+    console.log('hostname: ', hostname);
+    server.listen(port, hostname);
 } else {
     server.listen(port);
 }
 server.on('error', onError);
 server.on('listening', onListening);
-
-/**
- *
- * @returns {boolean} true if running in cloud foundry
- */
-function runningInCloudFoundry() {
-    if (process.env['CF_INSTANCE_IP']) {
-        return true;
-    }
-    return false;
-}
 
 /**
  * Normalize a port into a number, string, or false.

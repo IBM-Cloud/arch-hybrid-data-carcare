@@ -1,6 +1,6 @@
 // environment variable setup for test setup.  see config.js
-process.env.MR_CONTAINER = 'test';
-process.env.MR_DESTROY_CONTAINER = 'true';
+process.env.CAR_OSV2_PUBLIC_CONTAINER_NAME = 'test';
+process.env.CAR_OSV2_PUBLIC_CONTAINER_DESTROY = 'true';
 
 // normal
 var assert = require("assert"); // node.js core module

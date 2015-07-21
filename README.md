@@ -130,22 +130,24 @@ Great, curl is returning a table of contents that indicates the file is present.
 
 ## Container Groups
 
-    cf ic group create -v medicarvolume:/data -p 80 --bind medicarlocalbind --name medicarlocal registry.ng.bluemix.net/acme/medicarlocal
+    cf ic group create -v medicarvolume:/data -p 80 --bind medicarbridge --name medicarlocal registry.ng.bluemix.net/acme/medicarlocal
     cf ic route map --hostname medicarlocal --domain mybluemix.net medicarlocal
 
 
 ## On Premise Repository
 
+WARNING: It is too early in our app development to be accessing any path to secure storage on your premise.
+For expermintation purposes create an appropriate isolated host, or consider using the bluemix Virtual Machine capability for an isolated disposable server.
+
 The on premise data store is being accessed through the Secure Gateway service.
 Using the Bluemix UI, create the Secure Gateway service.
-
 * Create the gateway in the service.
-* Create the connection in the gateway.  As you will see below, the IP address of the computer that is running the records program locally is 158.85.183.50 and the port will be 8080.
+* Create the connection in the gateway.  As you will see below, the IP address of the computer that is running the records program on premise is 158.85.183.50 and the port will be 8080.
 
 On premise:
 * Follow the instructions to `docker run` the Secure Gateway Docker image connecting back to the gateway above.  For me this was `docker run -d ibmcom/secure-gateway-client KhNfR9WOC8l_prod_ng`
 * Run the on premise records app.  For me this was `docker run -d -p 8080:80 registry.ng.bluemix.net/acme/medicarlocal`
-* Run the `ifconfig` command and verify that the IP address configured in the gateway above is correct.  For me `ifconfig` displayed the following, so I'm good to go.
+* Run the `ifconfig` command and verify that the IP address configured in the gateway above is correct.  For me `ifconfig` displayed "inet addr:158.85.183.50" in the following, so I'm good to go.
 
   	eth1      Link encap:Ethernet  HWaddr 06:9f:f1:b6:50:cc
   	          inet addr:158.85.183.50  Bcast:158.85.183.63  Mask:255.255.255.224
@@ -154,9 +156,21 @@ On the computer that is running the Secure Gateway Docker image, I verified the 
 
     # curl 158.85.183.50:8080
 
-On any computer on the planet I could verify that the sg connection is working correctly.  In the Bluemix UI, open the info on the connection (you will find the connection within gateway which is in the Secure Gateway service).  For me the Cloud Host:Port was cap-sg-prd-2.integration.ibmcloud.com:15188
+On any computer on the planet I could verify that the sg connection is working correctly.
+In the Bluemix UI, open the info on the connection (you will find the connection within gateway which is in the Secure Gateway service).
+For me the Cloud Host:Port was cap-sg-prd-2.integration.ibmcloud.com:15188
 
     $ curl cap-sg-prd-2.integration.ibmcloud.com:15188
+
+Before making this secure it is possible to test out this insecure connection on a on prem test server.
+Add the host (cap-sg-prd-2.integration.ibmcloud.com)
+and port number (15188) to the application by editing these entries in the config/app.json file
+
+      "CAR_SG": {
+        "onpremHost": "cap-sg-prd-2.integration.ibmcloud.com",
+        "onpremPort": "15188"
+      },
+
 
 ### Making Secure Gateway secure with TLS
 
@@ -344,15 +358,57 @@ Save the stage.
 ## Deploy to Production
 This is pretty much the same as the Deploy to Staging step as described above.  Just be sure to specify the prod space rather than the dev space and set the route and volume information to point to the production instances rather than the staging instances.
 
+## Binding services to containers using a bridge app
+
+
+An intermediate Bluemix Cloud Foundry application is required to bind a service to a container.
+This is described in the container docs which,
+at the time of this writing, can be found at [Optional: Binding a service to a container](https://www.ng.bluemix.net/docs/starters/container_ui.html#container_ui).
+
+Let's create the "bridge" CF app now.
+
+In the Bluemix GUI:
+
+* Create a Node.js application. Give it the name medicarbridge.
+
 # OSV2 - Object Storage Version 2
 
 ## Create OSV2 service
 
 This is a IBM hosted version of swift over open stack.
 Using the Bluemix GUI, create the OSV2 service using Add Service or API then choose Object Storage (v2).
-Once the service has been created, click it to go to the details view. Select the cloud to use (in this case IBM Cloud Public) and click Save.
-The service can be bound to a Bluemix Application (Note: Bluemix supports Applications, Containers and Virtual Machines).
-See below for more information on containers.
+
+* Space: your space
+* App: medicarbridge (see above description of medicarbridge app)
+* Service Name: medicarosv2
+
+After restaging the service has been created and is now bound to the medicarbridge app.  
+
+Click around on the bluemix dashboard to see what you have created.
+You can navigate to the medacrosv2 service from the services or from the medicarosv2 app.
+
+
+* Back to the dashboard and select the medicarosv2 service
+* There may be some additional configuration displayed
+
+Take a look at the VCAP credentials - note that there are two different credentials associated with this service.
+One for the service and one for the bound service.
+The VCAP credentials are the bound service - so navigate to the service from the medicarbridge app:
+
+* Back in the dashboard, click the medicarbridge app.
+* Click "Bind a service or API" and bind the OSV2 service created earlier.
+* Click Show Credentials - see the summary of VCAP services below to see if basic format matches correctly.
+These VCAP credentials will be required to run and debug the application locally.
+
+Back in the command line:
+
+    cf ic ps
+    cf ic stop medicarlocal
+    cf ic rm medicarlocal
+    cf ic run -v medicarvolume:/data -p 80 --name medicarlocal -e CCS_BIND_APP=medicarbridge registry.ng.bluemix.net/acme/medicarlocal
+    cf ic ip bind 129.41.232.130 medicarlocal
+    curl $host/api/vol/public/
+
 
 ## Node.js source code
 
@@ -367,28 +423,6 @@ As described below, the proper way to bind the credentials when running on Bluem
 When working on your desktop, this won't be possible but the value of the environment variable can be added to the processEnvVCAP_SERVICES.
 Finally, if the VCAP environment variable cannot be determined, check the service -- it may provide the credentials which can be copied into osv2ServiceCredentials.
 The code has examples of the kinds of strings that are expected.
-
-## Binding OSV2 on Bluemix
-
-
-An intermediate Bluemix Cloud Foundry application is required to bind a service directly to a container.
-This is described in the container docs which,
-at the time of this writing, can be found at [Optional: Binding a service to a container](https://www.ng.bluemix.net/docs/starters/container_ui.html#container_ui).
-
-In the Bluemix GUI:
-
-* Create a Node.js application. Give it the name medicarlocalbind.
-* Back in the dashboard, click the medicarlocalbind app.
-* Click "Bind a service or API" and bind the OSV2 service created earlier.
-
-Back in the command line:
-
-    cf ic ps
-    cf ic stop medicarlocal
-    cf ic rm medicarlocal
-    cf ic run -v medicarvolume:/data -p 80 --name medicarlocal -e CCS_BIND_APP=medicarlocalbind registry.ng.bluemix.net/acme/medicarlocal
-    cf ic ip bind 129.41.232.130 medicarlocal
-    curl $host/api/vol/public/
 
 ## Credential and Session Handling
 To allow access to the private storage areas, user credentials must be provided.
@@ -482,7 +516,6 @@ See
   * configure and deply - provide a name: medicarsso
   * give name: Cloud Directory - 
   * Add user admin, admin.password, Admin, Istrator
-  * Add user powell, ppw, Powell, Rock  - if you want to run the unit tests
   * email: blank
 * Back in the dashboard Bind services to medicarbridge
   * Open medicarbridge
@@ -494,7 +527,6 @@ See
   * Download the required file for the Node.js app, the file is passport-idaas-openidconnect.zip and I unzipped it into the lib/ directory
 
 
-
 Note that in order to debug on my local computer I added the following line to my /etc/hosts file (windows c:\WINDOWS\system32\drivers\etc\hosts) 
 
     127.0.0.1       medicar-staging.mybluemix.net
@@ -503,7 +535,14 @@ Note that in order to debug on my local computer I added the following line to m
 * Facebook
   * Check out [](https://developers.facebook.com/docs/facebook-login/login-flow-for-web/v2.4)
   * Create the Web "medicar" app, Category "Business", likely does not matter
-  * Save away the client id and secret these will be required to configure the passport facebook strategy
+  * Tell us about your website: optional  I used http://mr.mybluemix.net 
+  * Notice the App id and App Secret these will be required to configure the passport facebook strategy and are referred to as clientId and clientSecret.
+  * Settings > Advanced > Client OAuth Settings
+    * NO - Client OAuth Login
+    * NO  - Embedded browser OAuth Login
+    * YES - Web OAuth Login 
+    * http://localhost/auth/facebook (need to change for production) - Valid OAuth redirect URIs, see the facebookConfigure() function in app.js. 
+    * YES - Web OAuth Login 
   * Determine the hostname and the callback path in the app.  A good place to start is http://localhost/auth/facebook/callback.
   localhost will need to be adjusted to the name of the final app in bluemix.
 
@@ -512,6 +551,20 @@ Note that in order to debug on my local computer I added the following line to m
             clientID: facebookConf.clientID,
             clientSecret: facebookConf.clientSecret,
             callbackURL: hostname + facebookCallbackPath,
+
+
+When you are ready to deploy your app start over in facebook you will need to adjust your facebook.com application configuration.
+This is what I did:
+
+* Settings > Advanced > Client OAuth Settings
+  * For the site url choose the real address, like: http://mr.mybluemix.net/auth/facebook
+
+In your IDS pipeline you will need to wire in the facebook client ID and client secret as secure properties:
+
+* CAR_FACEBOOK:clientId = ...your client id...
+* CAR_FACEBOOK:clientSecret = ...your client secret...
+
+When ready on the facebook manage app pages try "Status & Review" "... make available to general public" - "Yes"
 
 
 ## Jmeter locally
@@ -537,14 +590,28 @@ node version: v0.10.32
 google 
 
 
-## summary of services
+## summary of VCAP services
 
-mongo data base is required.  In the VCAP_SERVICES it must have an *name* of *medicarmongo*.  Here is an example:
+The config/app.json file contains the list of services that are accessed in the VCAP_SERVICES environment variables.
+Create the service and make bind it to the Cloud Foundry application or bridge it to the container app as described above.
+Make a note of the service name that you created.
+Then adjust the config/app.json file to match the name of the service.
+For example if you created an Object Storage V2 service with the name osv2-pquiring:
+
+      "serviceOsv2": {
+        "serviceName": "Object Storage",
+        "memberName": "osv2-pquiring"
+      },
+
+
+Here are the other services used by the application:
+
+mongo should be configured if you want to persist the session data.
 
     "VCAP_SERVICES": {
         "mongolab": [
           {
-          "name": "medicarmongo",
+          "name": "carcare_mongo",
           "label": "mongolab",
           "plan": "sandbox",
           "credentials": {
@@ -552,7 +619,7 @@ mongo data base is required.  In the VCAP_SERVICES it must have an *name* of *me
           }
         }
 
-Single Sign On.  In the VCAP_SERVICES it must have a *name* of *medicarsso*
+Single Sign On is required to use the Cloud Directory service in this example.
 
     "VCAP_SERVICES": {
       "SingleSignOn": [
@@ -573,7 +640,7 @@ Single Sign On.  In the VCAP_SERVICES it must have a *name* of *medicarsso*
         }   
 
 
-Object Storage Version 2.  In the VCAP_SERVICES, the 0 entry should be:
+Object Storage Version 2 is required to access the /api/obj storage system.
 
     "VCAP_SERVICES": {
        "Object Storage": [

@@ -1,31 +1,98 @@
 {
-  "facebook": {
-    "clientID": "1416497942014095",
-    "clientSecret": "d4b1e22e4cbb3cae5bd469cf1081adcb"
+  "# services used by the application are identified by the VCAP_SERVICES object name and the array member is located by the memberName": "comment",
+  "serviceOsv2": {
+    "serviceName": "Object Storage",
+    "memberName": "pquiring_carcare_osv2"
   },
+  "serviceSessionStore": {
+    "serviceName": "mongolab",
+    "memberName": "pquiring_carcare_mongo"
+  },
+  "serviceSingleSignOn": {
+    "serviceName": "SingleSignOn",
+    "memberName": "pquiring_carcare_sso"
+  },
+  "# Special case code for osv2.  If the osv2ServiceCredentials is configured it will be used instead of the VCAP_SERVICES indirect lookup": "comment",
+  "#osv2ServiceCredentials": {
+    "CloudIntegration": {
+      "auth_url": "https://keystone2.open.ibmcloud.com",
+      "swift_url": "https://swift2.open.ibmcloud.com/v1/AUTH_3627c702873a4e9ea92a54cd02d612bc",
+      "sdk_auth_url": "https://keystone2.open.ibmcloud.com",
+      "project": "acme",
+      "region": "dal09",
+      "credentials": {
+        "userid": "pquiring@us.ibm.com",
+        "password": "x8f2,SxA%Ps?{sYL"
+      }
+    }
+  },
+
+  "# The following capital letters are more likely to be overridden with environment variables.  MR_FACEBOOK:ClientSecret=d4b1e22e4cbb3cae5bd469cf1081adcb for example": "comment",
+  "# Facebook properties should be secure properties in the deploy pipeline": "comment",
+  "CAR_FACEBOOK": {
+    "clientId": "1443155985992042",
+    "clientSecret": "52d05e665d9354bec1579778399ca423"
+  },
+
+  "# Secure Gateway URL and port providing access to the on premise storage": "comment",
+  "CAR_SG": {
+    "onpremHost": "cap-sg-prd-3.integration.ibmcloud.com",
+    "onpremPort": "15207"
+  },
+
+  "# Listen to these. If the hostname is not provided (default) it will not be provided on the server.listen() call see https://nodejs.org/api/http.html#http_server_listen_port_hostname_backlog_callback.": "comment",
+  "# If running in bluemix cloud foundry they will be overridden by the CF provided values.": "comment",
+  "#CAR_HOSTNAME": "undefined",
+  "CAR_PORT": "80",
+  "CAR_OSV2_PUBLIC_CONTAINER_NAME": "medical_records_container",
+  "CAR_OSV2_PUBLIC_CONTAINER_DESTROY": "false",
+  "CAR_FILE_DATADIR": "/data",
   "VCAP_SERVICES": {
-      "mongolab": [
+    "Object Storage": [
       {
-        "name": "medicarmongo",
+        "name": "pquiring_carcare_osv2",
+        "label": "Object Storage",
+        "plan": "Free",
+        "credentials": {
+          "auth_url": "https://objectstorage.ng.bluemix.net/auth/8259e199-3520-4de6-9180-411aa1788095/7435ddac-b448-404c-a701-5a6a25390915",
+          "username": "e32ce1e62d37dcaf14aab57b48337c7fc2caf459",
+          "password": "b1d3b9ed1ab9dd447fa9262ba9ba1f9833681419cc5b80a999f6651c8265"
+        }
+      }
+    ],
+    "SecureGateway": [
+      {
+        "name": "pquiring_carcare_sg",
+        "label": "SecureGateway",
+        "plan": "securegatewayplan",
+        "credentials": {
+          "org_id": "80a485ba-5bb1-424e-93b9-93900d1cd5c3",
+          "space_id": "711d6b59-295d-43e6-b383-990003a96375",
+          "url": "https://sgmanager.ng.bluemix.net"
+        }
+      }
+    ],
+    "mongolab": [
+      {
+        "name": "pquiring_carcare_mongo",
         "label": "mongolab",
         "plan": "sandbox",
         "credentials": {
-          "uri": "mongodb://IbmCloud_vugkd6vn_bsi06h9f_l0ro0s1e:NuN0Fwi-5zLqXptHUyefjwWvEWAwMo_D@ds055110.mongolab.com:55110/IbmCloud_vugkd6vn_bsi06h9f"
+          "uri": "mongodb://IbmCloud_vugkd6vn_f6sphctb_m320bljt:Is864OGldgMGD7m_JOnrVheU5mtHnqqQ@ds061112.mongolab.com:61112/IbmCloud_vugkd6vn_f6sphctb"
         }
       }
-
     ],
     "SingleSignOn": [
       {
-        "name": "medicarsso",
+        "name": "pquiring_carcare_sso",
         "label": "SingleSignOn",
         "plan": "standard",
         "credentials": {
-          "secret": "izMN9P3pJw",
-          "tokenEndpointUrl": "https://medicarsso-r12998984j-ctw5.iam.ibmcloud.com/idaas/oidc/endpoint/default/token",
-          "authorizationEndpointUrl": "https://medicarsso-r12998984j-ctw5.iam.ibmcloud.com/idaas/oidc/endpoint/default/authorize",
-          "issuerIdentifier": "medicarsso-r12998984j-ctw5.iam.ibmcloud.com",
-          "clientId": "JE9JE3rNPd",
+          "secret": "je952immQn",
+          "tokenEndpointUrl": "https://mrsso-tdn92yta4s-cwg2.iam.ibmcloud.com/idaas/oidc/endpoint/default/token",
+          "authorizationEndpointUrl": "https://mrsso-tdn92yta4s-cwg2.iam.ibmcloud.com/idaas/oidc/endpoint/default/authorize",
+          "issuerIdentifier": "mrsso-tdn92yta4s-cwg2.iam.ibmcloud.com",
+          "clientId": "eHlyOP37Vl",
           "serverSupportedScope": [
             "openid"
           ]
