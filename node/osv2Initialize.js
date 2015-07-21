@@ -1,13 +1,10 @@
 'use strict';
 var debug = require('debug')('medicar');
 var config = require('./config');
-var osv2Authenticate = require('./osv2Authenticate');
 var Promise = require("bluebird");
 
+var osv2Authenticate = config.osv2Authenticate;
 var client; // access this via the initializeOsv2ReturnClient
-
-// initialize with some hard coded defaults....
-osv2Authenticate.init(config.osv2ServiceCredentials, config.processEnvVCAP_SERVICES);
 
 // containerContext is {
 //   name: nameOfContainer,

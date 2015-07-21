@@ -6,9 +6,9 @@ var path = require('path');
 
 // environment variable setup for test setup.  see config.js
 var tmpData = 'tmpdata';
-process.env.MR_CONTAINER = 'test';
-process.env.MR_DESTROY_CONTAINER = 'true';
-process.env.MR_DATADIR = tmpData;
+process.env.CAR_OSV2_PUBLIC_CONTAINER_NAME = 'test';
+process.env.CAR_OSV2_PUBLIC_CONTAINER_DESTROY = 'true';
+process.env.CAR_FILE_DATADIR = tmpData;
 
 var config = require('../config');
 
