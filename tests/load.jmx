@@ -24,12 +24,12 @@
           </elementProp>
           <elementProp name="testInputs" elementType="Argument">
             <stringProp name="Argument.name">testInputs</stringProp>
-            <stringProp name="Argument.value">${__P(testInputs,/home/cdmontgo/dev/workspaces/medicar/tests/inputs)}</stringProp>
+            <stringProp name="Argument.value">${__P(testInputs,/home/cdmontgo/dev/workspaces/arch-hybrid-data-carcare/tests/inputs)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="server" elementType="Argument">
             <stringProp name="Argument.name">server</stringProp>
-            <stringProp name="Argument.value">medicar-staging.mybluemix.net</stringProp>
+            <stringProp name="Argument.value">carcare-staging.mybluemix.net</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -72,7 +72,7 @@
             <stringProp name="55126294">timestamp</stringProp>
           </collectionProp>
           <collectionProp name="UserParameters.thread_values">
-            <collectionProp name="1711310736">
+            <collectionProp name="1500318761">
               <stringProp name="1711310705">${__javaScript(new Date().getTime() + Math.random();)}</stringProp>
             </collectionProp>
           </collectionProp>
@@ -247,7 +247,7 @@
             <stringProp name="55126294">timestamp</stringProp>
           </collectionProp>
           <collectionProp name="UserParameters.thread_values">
-            <collectionProp name="1711310736">
+            <collectionProp name="1500318761">
               <stringProp name="1711310705">${__javaScript(new Date().getTime() + Math.random();)}</stringProp>
             </collectionProp>
           </collectionProp>
