@@ -34,6 +34,14 @@ The test suite is run with mocha.
     npm install -g mocha
     npm test
 
+The Selenium tests are also run with mocha.
+    npm install --save-dev selenium-webdriver@2.44.0
+    npm install --save-dev chromedriver
+    npm install --save-dev chai chai-as-promised
+    npm install --save-dev coffee-script
+    (Note: npm warns to install coffee-script globally. We need to install locally for the way the tests are setup to run.)
+    npm run test-selenium
+
 ## API
 Example curl from swift docs using cygwin.  `-T` upload a file.  `-i` include header information in the output. `-X` request command. `-F` form.  For a form, it must have one file and one optional field whose value is the real storage filename.  A get at the volume will retrieve a list of all the files.
 
