@@ -34,9 +34,12 @@ The test suite is run with mocha.
     npm install -g mocha
     npm test
 
-The Selenium tests are also run with mocha.
+The Selenium tests are also run with mocha. They assume the app is running on http://localhost:80 and you have mocha installed (else install mocha as mentioned above).
+
     npm install --save-dev selenium-webdriver@2.44.0
+    (Note: At the time of writing this, installing the latest version was giving an error on Windows. Hence we are using a specific version)
     npm install --save-dev chromedriver
+    (Note: On windows you will need to set the PATH to the chromedriver)
     npm install --save-dev chai chai-as-promised
     npm install --save-dev coffee-script
     (Note: npm warns to install coffee-script globally. We need to install locally for the way the tests are setup to run.)
@@ -68,7 +71,7 @@ Object storage swap `vol` with `obj`.
 Similarly it is possible to read from the on premise by changing `vol` to `onprem`.
 
 ## Docker Image
-See [Prerequisites for installing IBM Containers Extension (ICE)](https://www.ng.bluemix.net/docs/starters/container_cli_ov.html#container_prereq).
+See [IBM Containers plug-in](https://www.ng.bluemix.net/docs/containers/container_cli_cfic.html).
 This documentation assumes familiarity with Docker and cf ic command line.
 Create and run the Docker image using the Docker file:
 
@@ -295,7 +298,7 @@ The deploygroup.sh script will look for certain environment variables to trigger
   	ROUTE_HOSTNAME = medicar-staging
   	ROUTE_DOMAIN = mybluemix.net
   	OPTIONAL_ARGS = "-v medicarstagingvolume:/data"
-The first two properties will be used to setup the route to the app once it is deployed and will result in the app being made available at medicar-staging.mybluemix.net.  The last property will be passed to the ICE command that deploys the container group and will attach the volume storage where files will be persisted across deployments of the app.
+The first two properties will be used to setup the route to the app once it is deployed and will result in the app being made available at medicar-staging.mybluemix.net.  The last property will be passed to the cf ic command that deploys the container group and will attach the volume storage where files will be persisted across deployments of the app.
 
 Prior to running this stage of the pipeline, be sure to create the volume storage by running the following command.  It only needs to be run once.
 
