@@ -15,7 +15,7 @@
 * Install node and npm on your computer. Note: Node is required not Node.js.
 * Clone this project.
 * `cd node`
-* `npm install`
+* `npm install` or `npm install --production` (to not install dev dependencies)
 * `npm start`
 * The /data directory on your computer will need to be writeable. 
 * Check out bin/www.js it will indicate what the port# is.  Currently it is http:localhost:80.  You can visit this in a browser.  See the curl examples below.
@@ -34,14 +34,13 @@ The test suite is run with mocha.
     npm install -g mocha
     npm test
 
-The Selenium tests are also run with mocha. They assume the app is running on http://localhost:80 and you have mocha installed (else install mocha as mentioned above).
+The Selenium tests are also run with mocha. They assume the app is running on http://localhost:80 and you have mocha installed (else install mocha as mentioned above). If you ran `npm install` earlier, you don't need to install the following packages since they are already installed. You can directly run the tests. If on the other hand you ran `npm install --production` you would need to install all the following packages prior to running the tests. 
 
-    npm install --save-dev selenium-webdriver@2.44.0
-    (Note: At the time of writing this, installing the latest version was giving an error on Windows. Hence we are using a specific version)
-    npm install --save-dev chromedriver
-    (Note: On windows you will need to set the PATH to the chromedriver)
-    npm install --save-dev chai chai-as-promised
-    npm install --save-dev coffee-script
+    npm install selenium-webdriver
+    npm install chromedriver
+    (Note: Ensure it can be found on your system PATH)
+    npm install chai chai-as-promised
+    npm install coffee-script
     (Note: npm warns to install coffee-script globally. We need to install locally for the way the tests are setup to run.)
     npm run test-selenium
 
